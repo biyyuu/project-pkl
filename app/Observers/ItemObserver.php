@@ -1,7 +1,5 @@
 <?php
 
-<?php
-
 namespace App\Observers;
 
 use App\Models\Item;
@@ -34,19 +32,12 @@ class ItemObserver
             'action' => 'hapus',
         ]);
     }
-}
 
-    /**
-     * Handle the Item "restored" event.
-     */
     public function restored(Item $item): void
     {
         //
     }
 
-    /**
-     * Handle the Item "force deleted" event.
-     */
     public function forceDeleted(Item $item): void
     {
         //

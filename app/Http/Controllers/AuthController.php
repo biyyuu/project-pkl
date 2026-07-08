@@ -14,19 +14,36 @@ class AuthController extends Controller
 
     public function login(Request $request)
     {
-        $credentials = $request->validate([
-            'email'    => 'required|email',
+        $request->validate([
+            'username' => 'required|string',
             'password' => 'required|string',
+            'role'     => 'required|in:admin,staff',
         ]);
 
-        if (Auth::attempt($credentials, $request->boolean('remember'))) {
+        $credentials = [
+            'email'    => $request->username,
+            'password' => $request->password,
+        ];
+
+        if (Auth::attempt($credentials, false)) {
+            // Verify that the authenticated user has the selected role
+            if (Auth::user()->role !== $request->role) {
+                Auth::logout();
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+
+                return back()->withErrors([
+                    'role' => 'Role yang dipilih tidak sesuai dengan akun Anda.',
+                ])->onlyInput('username', 'role');
+            }
+
             $request->session()->regenerate();
             return redirect()->intended('/dashboard');
         }
 
         return back()->withErrors([
-            'email' => 'Email atau password salah.',
-        ])->onlyInput('email');
+            'username' => 'Username atau password salah.',
+        ])->onlyInput('username', 'role');
     }
 
     public function logout(Request $request)
