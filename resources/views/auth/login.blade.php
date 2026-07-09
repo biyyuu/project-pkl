@@ -52,7 +52,7 @@
 
         .hero-overlay {
             position: absolute;
-            object-fit: cover;
+            object-fit:
             bottom: 0;
             left: 0;
             right: 0;

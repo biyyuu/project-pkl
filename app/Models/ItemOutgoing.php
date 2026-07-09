@@ -4,35 +4,33 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
-class Item extends Model
+class ItemOutgoing extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
 
     protected $fillable = [
-        'no_inventaris', 'nama_barang', 'merk', 'serial_number',
-        'jumlah', 'nama_pengadaan', 'tahun_pengadaan',
-        'kondisi_barang', 'user_id', 'created_by',
+        'item_id', 'user_id', 'recorded_by',
+        'jumlah_keluar', 'tanggal_keluar',
+        'keperluan', 'keterangan',
     ];
 
-    public function owner()
+    protected $casts = [
+        'tanggal_keluar' => 'date',
+    ];
+
+    public function item()
     {
-        return $this->belongsTo(User::class, 'user_id');
+        return $this->belongsTo(Item::class);
     }
 
-    public function creator()
+    public function user()
     {
-        return $this->belongsTo(User::class, 'created_by');
+        return $this->belongsTo(User::class);
     }
 
-    public function outgoings()
+    public function recorder()
     {
-        return $this->hasMany(ItemOutgoing::class);
-    }
-
-    public function histories()
-    {
-        return $this->hasMany(ItemHistory::class);
+        return $this->belongsTo(User::class, 'recorded_by');
     }
 }
