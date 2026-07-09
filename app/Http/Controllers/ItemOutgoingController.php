@@ -117,6 +117,73 @@ class ItemOutgoingController extends Controller
     }
 
     /**
+     * Update the specified resource in storage.
+     */
+    public function update(Request $request, ItemOutgoing $itemOutgoing)
+    {
+        $request->validate([
+            'item_id' => 'required|exists:items,id',
+            'borrower_id' => 'required|exists:borrowers,id',
+            'jumlah_keluar' => 'required|integer|min:1',
+            'tanggal_keluar' => 'required|date',
+            'keperluan' => 'nullable|string|max:255',
+            'keterangan' => 'nullable|string',
+        ]);
+
+        $oldItem = Item::findOrFail($itemOutgoing->item_id);
+        $newItem = Item::findOrFail($request->item_id);
+        $oldJumlah = $itemOutgoing->jumlah_keluar;
+        $newJumlah = $request->jumlah_keluar;
+
+        DB::transaction(function () use ($request, $itemOutgoing, $oldItem, $newItem, $oldJumlah, $newJumlah) {
+            // If same item, adjust the difference
+            if ($oldItem->id === $newItem->id) {
+                $diff = $newJumlah - $oldJumlah;
+                if ($diff > 0 && $newItem->jumlah < $diff) {
+                    throw new \Exception('Stok tidak mencukupi. Stok tersedia: ' . $newItem->jumlah);
+                }
+                if ($diff !== 0) {
+                    if ($diff > 0) {
+                        $newItem->decrement('jumlah', $diff);
+                    } else {
+                        $newItem->increment('jumlah', abs($diff));
+                    }
+                }
+            } else {
+                // Restore old item stock
+                $oldItem->increment('jumlah', $oldJumlah);
+                // Deduct from new item stock
+                if ($newItem->jumlah < $newJumlah) {
+                    throw new \Exception('Stok tidak mencukupi. Stok tersedia: ' . $newItem->jumlah);
+                }
+                $newItem->decrement('jumlah', $newJumlah);
+            }
+
+            $itemOutgoing->update([
+                'item_id' => $request->item_id,
+                'borrower_id' => $request->borrower_id,
+                'jumlah_keluar' => $newJumlah,
+                'tanggal_keluar' => $request->tanggal_keluar,
+                'keperluan' => $request->keperluan,
+                'keterangan' => $request->keterangan,
+            ]);
+
+            // Log history
+            ItemHistory::create([
+                'item_id' => $request->item_id,
+                'user_id' => auth()->id(),
+                'action' => 'edit',
+                'jumlah_sebelum' => $oldJumlah,
+                'jumlah_sesudah' => $newJumlah,
+                'deskripsi' => 'Edit data barang keluar',
+            ]);
+        });
+
+        return redirect()->route('item-outgoing.index')
+            ->with('success', 'Data barang keluar berhasil diperbarui.');
+    }
+
+    /**
      * Remove the specified resource from storage.
      */
     public function destroy(ItemOutgoing $itemOutgoing)

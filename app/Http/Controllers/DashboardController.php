@@ -9,6 +9,7 @@ use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class DashboardController extends Controller
 {
@@ -32,15 +33,43 @@ class DashboardController extends Controller
         // --- Barang Kondisi Baik ---
         $barangBaik = Item::where('kondisi_barang', 'baik')->count();
 
-        // --- Demand Peminjaman by Grafik (last 6 months) ---
+        // --- Demand Peminjaman by Grafik ---
+        $chartPeriod = $request->query('chart_period', '6_bulan');
         $demandLabels = [];
         $demandData = [];
-        for ($i = 5; $i >= 0; $i--) {
-            $date = now()->subMonths($i);
-            $demandLabels[] = $date->translatedFormat('M Y');
-            $demandData[] = ItemOutgoing::whereMonth('tanggal_keluar', $date->month)
-                ->whereYear('tanggal_keluar', $date->year)
-                ->sum('jumlah_keluar');
+
+        if ($chartPeriod === 'harian') {
+            for ($i = 6; $i >= 0; $i--) {
+                $date = now()->subDays($i);
+                $demandLabels[] = $date->translatedFormat('d M');
+                $demandData[] = ItemOutgoing::whereDate('tanggal_keluar', $date->format('Y-m-d'))
+                    ->sum('jumlah_keluar');
+            }
+        } elseif ($chartPeriod === 'mingguan') {
+            for ($i = 3; $i >= 0; $i--) {
+                $start = now()->subWeeks($i)->startOfWeek();
+                $end = now()->subWeeks($i)->endOfWeek();
+                $demandLabels[] = $start->translatedFormat('d M') . ' - ' . $end->translatedFormat('d M');
+                $demandData[] = ItemOutgoing::whereBetween('tanggal_keluar', [$start->format('Y-m-d'), $end->format('Y-m-d')])
+                    ->sum('jumlah_keluar');
+            }
+        } elseif ($chartPeriod === 'bulanan') {
+            for ($i = 11; $i >= 0; $i--) {
+                $date = now()->subMonths($i);
+                $demandLabels[] = $date->translatedFormat('M Y');
+                $demandData[] = ItemOutgoing::whereMonth('tanggal_keluar', $date->month)
+                    ->whereYear('tanggal_keluar', $date->year)
+                    ->sum('jumlah_keluar');
+            }
+        } else {
+            // 6_bulan (default)
+            for ($i = 5; $i >= 0; $i--) {
+                $date = now()->subMonths($i);
+                $demandLabels[] = $date->translatedFormat('M Y');
+                $demandData[] = ItemOutgoing::whereMonth('tanggal_keluar', $date->month)
+                    ->whereYear('tanggal_keluar', $date->year)
+                    ->sum('jumlah_keluar');
+            }
         }
 
         // --- Daftar Peminjam (latest outgoings with borrower info) ---
@@ -79,6 +108,7 @@ class DashboardController extends Controller
             'totalStok',
             'totalPeminjam',
             'barangBaik',
+            'chartPeriod',
             'demandLabels',
             'demandData',
             'daftarPeminjam',
@@ -86,5 +116,33 @@ class DashboardController extends Controller
             'barangTersedia',
             'historyPeminjaman',
         ));
+    }
+
+    public function exportPdf(Request $request)
+    {
+        $month = $request->query('month', now()->month);
+        $year = $request->query('year', now()->year);
+
+        // Fetch data for the selected month & year
+        $outgoings = ItemOutgoing::with(['item', 'borrower', 'recorder'])
+            ->whereMonth('tanggal_keluar', $month)
+            ->whereYear('tanggal_keluar', $year)
+            ->orderBy('tanggal_keluar', 'asc')
+            ->get();
+
+        $monthName = Carbon::create()->month((int)$month)->translatedFormat('F');
+        
+        // Let's create a base64 version of the kemenhan logo if exists
+        $logoPath = public_path('images/kemenhan-logo.png');
+        $logoBase64 = '';
+        if (file_exists($logoPath)) {
+            $logoData = file_get_contents($logoPath);
+            $logoBase64 = 'data:image/png;base64,' . base64_encode($logoData);
+        }
+
+        $pdf = Pdf::loadView('pdf.laporan', compact('outgoings', 'monthName', 'year', 'logoBase64'))
+                ->setPaper('a4', 'landscape');
+
+        return $pdf->download("Laporan_Peminjaman_Inventaris_{$monthName}_{$year}.pdf");
     }
 }

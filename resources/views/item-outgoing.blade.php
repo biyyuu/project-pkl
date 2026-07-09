@@ -856,7 +856,7 @@
                     </svg>
                     Dashboard
                 </a>
-                <a href="#" class="nav-item" id="nav-daftar-barang">
+                <a href="{{ route('item') }}" class="nav-item" id="nav-daftar-barang">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <line x1="8" y1="6" x2="21" y2="6"/>
                         <line x1="8" y1="12" x2="21" y2="12"/>
@@ -998,7 +998,10 @@
                             <thead>
                                 <tr>
                                     <th>No</th>
+                                    <th>No. Inventaris</th>
                                     <th>Nama Barang</th>
+                                    <th>Merk</th>
+                                    <th>No. Seri</th>
                                     <th>Peminjam</th>
                                     <th>Jumlah</th>
                                     <th>Tanggal Keluar</th>
@@ -1012,7 +1015,10 @@
                                 @foreach($outgoings as $index => $outgoing)
                                 <tr>
                                     <td style="font-size: 12px; color: rgba(255,255,255,0.35);">{{ $outgoings->firstItem() + $index }}</td>
+                                    <td style="font-family: monospace; font-size: 12px; color: #fbbf24;">{{ $outgoing->item->no_inventaris ?? '-' }}</td>
                                     <td class="item-name">{{ $outgoing->item->nama_barang ?? '-' }}</td>
+                                    <td>{{ $outgoing->item->merk ?? '-' }}</td>
+                                    <td>{{ $outgoing->item->serial_number ?? '-' }}</td>
                                     <td>{{ $outgoing->borrower->nama ?? '-' }}</td>
                                     <td>{{ $outgoing->jumlah_keluar }}</td>
                                     <td>{{ $outgoing->tanggal_keluar->translatedFormat('d M Y') }}</td>
@@ -1020,16 +1026,24 @@
                                     <td style="max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ $outgoing->keterangan ?? '-' }}</td>
                                     <td style="font-size: 12px; color: rgba(255,255,255,0.4);">{{ $outgoing->recorder->name ?? '-' }}</td>
                                     <td>
-                                        <form action="{{ route('item-outgoing.destroy', $outgoing) }}" method="POST" onsubmit="return confirm('Hapus data barang keluar ini? Stok akan dikembalikan.')">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="btn-delete" title="Hapus dan kembalikan stok">
+                                        <div style="display:flex; gap:6px; align-items:center;">
+                                            <button type="button" class="btn-delete" title="Edit" style="color: #fbbf24;" onclick='openEditOutgoingModal(@json($outgoing))'>
                                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                                    <polyline points="3 6 5 6 21 6"/>
-                                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
                                                 </svg>
                                             </button>
-                                        </form>
+                                            <form action="{{ route('item-outgoing.destroy', $outgoing) }}" method="POST" onsubmit="return confirm('Hapus data barang keluar ini? Stok akan dikembalikan.')" style="display:inline;">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="btn-delete" title="Hapus dan kembalikan stok">
+                                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                        <polyline points="3 6 5 6 21 6"/>
+                                                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                                                    </svg>
+                                                </button>
+                                            </form>
+                                        </div>
                                     </td>
                                 </tr>
                                 @endforeach
@@ -1246,6 +1260,74 @@
         </div>
     </div>
 
+    <!-- ===== MODAL: Edit Barang Keluar ===== -->
+    <div class="modal-overlay" id="modal-overlay-edit-outgoing">
+        <div class="modal" id="modal-edit-outgoing">
+            <div class="modal-header">
+                <h2 class="modal-title">Edit Barang Keluar</h2>
+                <button class="modal-close" onclick="closeEditOutgoingModal()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="form-edit-outgoing" method="POST">
+                    @csrf
+                    @method('PUT')
+
+                    <div class="form-group">
+                        <label class="form-label" for="edit_out_item_id">Barang</label>
+                        <select class="form-control" name="item_id" id="edit_out_item_id" required>
+                            <option value="">-- Pilih Barang --</option>
+                            @foreach(\App\Models\Item::orderBy('nama_barang')->get() as $item)
+                                <option value="{{ $item->id }}">
+                                    {{ $item->nama_barang }} (Stok: {{ $item->jumlah }})
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="edit_out_borrower_id">Peminjam</label>
+                        <select class="form-control" name="borrower_id" id="edit_out_borrower_id" required>
+                            <option value="">-- Pilih Peminjam --</option>
+                            @foreach($borrowers as $b)
+                                <option value="{{ $b->id }}">{{ $b->nama }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label" for="edit_out_jumlah">Jumlah</label>
+                            <input type="number" class="form-control" name="jumlah_keluar" id="edit_out_jumlah" min="1" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="edit_out_tanggal">Tanggal Keluar</label>
+                            <input type="date" class="form-control" name="tanggal_keluar" id="edit_out_tanggal" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="edit_out_keperluan">Keperluan</label>
+                        <input type="text" class="form-control" name="keperluan" id="edit_out_keperluan">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="edit_out_keterangan">Keterangan</label>
+                        <textarea class="form-control" name="keterangan" id="edit_out_keterangan"></textarea>
+                    </div>
+
+                    <button type="submit" class="btn-submit">
+                        Simpan Perubahan
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <script>
         // ===== MODAL =====
         function openModal() {
@@ -1415,6 +1497,40 @@
                     alert.remove();
                 }, 300);
             }, 5000);
+        });
+
+        // ===== EDIT OUTGOING MODAL =====
+        function openEditOutgoingModal(outgoing) {
+            const overlay = document.getElementById('modal-overlay-edit-outgoing');
+            const form = document.getElementById('form-edit-outgoing');
+
+            // Set action URL
+            form.action = '/barang-keluar/' + outgoing.id;
+
+            // Fill fields
+            document.getElementById('edit_out_item_id').value = outgoing.item_id;
+            document.getElementById('edit_out_borrower_id').value = outgoing.borrower_id;
+            document.getElementById('edit_out_jumlah').value = outgoing.jumlah_keluar;
+            document.getElementById('edit_out_tanggal').value = outgoing.tanggal_keluar ? outgoing.tanggal_keluar.split('T')[0] : '';
+            document.getElementById('edit_out_keperluan').value = outgoing.keperluan || '';
+            document.getElementById('edit_out_keterangan').value = outgoing.keterangan || '';
+
+            overlay.style.display = 'flex';
+            requestAnimationFrame(() => overlay.classList.add('show'));
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeEditOutgoingModal() {
+            const overlay = document.getElementById('modal-overlay-edit-outgoing');
+            overlay.classList.remove('show');
+            setTimeout(() => {
+                overlay.style.display = 'none';
+            }, 250);
+            document.body.style.overflow = '';
+        }
+
+        document.getElementById('modal-overlay-edit-outgoing').addEventListener('click', function(e) {
+            if (e.target === this) closeEditOutgoingModal();
         });
     </script>
 </body>

@@ -83,7 +83,7 @@
                             </svg>
                             This Month
                         </button>
-                        <button class="btn-export" id="btn-export">
+                        <button class="btn-export" id="btn-export" onclick="openExportModal()">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
                                 <polyline points="7 10 12 15 17 10"/>
@@ -157,9 +157,14 @@
 
                 <!-- Demand Chart -->
                 <div class="card" id="card-demand">
-                    <div class="card-header">
+                    <div class="card-header" style="display: flex; align-items: center; justify-content: space-between;">
                         <span class="card-title">Demand Peminjaman by Grafik</span>
-                        <span class="card-badge">6 Bulan Terakhir</span>
+                        <select id="chartPeriodSelect" onchange="updateChartPeriod()" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.8); border-radius: 6px; padding: 4px 8px; font-size: 12px; font-family: 'Inter', sans-serif; cursor:pointer; outline:none;">
+                            <option value="harian" {{ $chartPeriod === 'harian' ? 'selected' : '' }}>Harian</option>
+                            <option value="mingguan" {{ $chartPeriod === 'mingguan' ? 'selected' : '' }}>Mingguan</option>
+                            <option value="bulanan" {{ $chartPeriod === 'bulanan' ? 'selected' : '' }}>Bulanan</option>
+                            <option value="6_bulan" {{ $chartPeriod === '6_bulan' ? 'selected' : '' }}>6 Bulan</option>
+                        </select>
                     </div>
                     <div class="chart-container">
                         <canvas id="demandChart"></canvas>
@@ -339,6 +344,81 @@
         </main>
     </div>
 
+    <!-- ===== MODAL EXPORT ===== -->
+    <style>
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+            display: none;
+            align-items: center; justify-content: center;
+            z-index: 999;
+            opacity: 0; transition: opacity 0.25s ease;
+        }
+        .modal-overlay.show { opacity: 1; }
+        .modal {
+            background-color: #2a1f1c; padding: 24px; border-radius: 14px;
+            width: 100%; max-width: 400px; border: 1px solid rgba(255,255,255,0.08);
+            transform: translateY(10px); transition: transform 0.25s ease;
+        }
+        .modal-overlay.show .modal { transform: translateY(0); }
+        
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .modal-title { font-size: 18px; font-weight: 700; color: #fff; margin:0;}
+        .modal-close { background: none; border: none; color: rgba(255,255,255,0.5); cursor: pointer; }
+        .modal-close:hover { color: #fff; }
+        
+        .form-group { margin-bottom: 16px; }
+        .form-label { display: block; font-size: 13px; color: rgba(255,255,255,0.7); margin-bottom: 6px; }
+        .form-control {
+            width: 100%; padding: 10px 12px; background: rgba(0,0,0,0.2);
+            border: 1px solid rgba(255,255,255,0.1); border-radius: 8px;
+            color: #fff; font-family: 'Inter', sans-serif; font-size: 14px; outline:none;
+        }
+        .form-control:focus { border-color: rgba(255,255,255,0.3); }
+        .btn-submit {
+            width: 100%; padding: 12px; background: #fbbf24; border: none;
+            border-radius: 8px; color: #1a1210; font-weight: 600; cursor: pointer;
+            margin-top: 10px; font-family: 'Inter', sans-serif;
+        }
+        .btn-submit:hover { background: #f59e0b; }
+    </style>
+    
+    <div class="modal-overlay" id="modal-overlay-export">
+        <div class="modal" id="modal-export">
+            <div class="modal-header">
+                <h2 class="modal-title">Export Laporan PDF</h2>
+                <button class="modal-close" type="button" onclick="closeExportModal()">
+                    <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form action="{{ route('export.pdf') }}" method="GET" target="_blank" onsubmit="closeExportModal()">
+                    <div class="form-group">
+                        <label class="form-label">Pilih Bulan</label>
+                        <select class="form-control" name="month" required>
+                            @foreach(range(1, 12) as $m)
+                                <option value="{{ $m }}" {{ $m == now()->month ? 'selected' : '' }}>
+                                    {{ \Carbon\Carbon::create()->month($m)->translatedFormat('F') }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Pilih Tahun</label>
+                        <select class="form-control" name="year" required>
+                            @foreach(range(now()->year, now()->subYears(5)->year) as $y)
+                                <option value="{{ $y }}" {{ $y == now()->year ? 'selected' : '' }}>{{ $y }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <button type="submit" class="btn-submit">Unduh PDF</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- ===== CHART JS ===== -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -408,6 +488,33 @@
                     }
                 });
             }
+        });
+
+        function updateChartPeriod() {
+            const period = document.getElementById('chartPeriodSelect').value;
+            const url = new URL(window.location.href);
+            url.searchParams.set('chart_period', period);
+            window.location.href = url.toString();
+        }
+
+        // ===== MODAL EXPORT =====
+        function openExportModal() {
+            const overlay = document.getElementById('modal-overlay-export');
+            overlay.style.display = 'flex';
+            requestAnimationFrame(() => overlay.classList.add('show'));
+        }
+
+        function closeExportModal() {
+            const overlay = document.getElementById('modal-overlay-export');
+            overlay.classList.remove('show');
+            setTimeout(() => {
+                overlay.style.display = 'none';
+            }, 250);
+        }
+        
+        // Close modal when clicking outside
+        document.getElementById('modal-overlay-export').addEventListener('click', function(e) {
+            if (e.target === this) closeExportModal();
         });
     </script>
 </body>

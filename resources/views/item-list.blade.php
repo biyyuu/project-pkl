@@ -4,11 +4,66 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Daftar Barang - Inventaris Kemhan Pusdatin</title>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('css/dashboard.css') }}">
     <link rel="stylesheet" href="{{ asset('css/itemlist.css') }}">
+    <style>
+        /* Action buttons in table */
+        .btn-action-group {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+        .btn-edit, .btn-delete-item {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.08);
+            background: rgba(255,255,255,0.04);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .btn-edit svg, .btn-delete-item svg {
+            width: 15px;
+            height: 15px;
+        }
+        .btn-edit {
+            color: #fbbf24;
+        }
+        .btn-edit:hover {
+            background: rgba(251,191,36,0.12);
+            border-color: rgba(251,191,36,0.25);
+        }
+        .btn-delete-item {
+            color: #f87171;
+        }
+        .btn-delete-item:hover {
+            background: rgba(248,113,113,0.12);
+            border-color: rgba(248,113,113,0.25);
+        }
+
+        /* Alert error */
+        .alert-error-msg {
+            background: rgba(239, 68, 68, 0.12);
+            border: 1px solid rgba(239, 68, 68, 0.25);
+            padding: 14px 18px;
+            border-radius: 10px;
+            color: #f87171;
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+    </style>
 </head>
 <body>
     <div class="app-layout">
@@ -38,7 +93,7 @@
                     </svg>
                     Daftar Barang
                 </a>
-                <a href="#" class="nav-item" id="nav-barang-keluar">
+                <a href="{{ route('item-outgoing.index') }}" class="nav-item" id="nav-barang-keluar">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
                         <polyline points="17 8 12 3 7 8"/>
@@ -89,6 +144,15 @@
                 </div>
             @endif
 
+            @if(session('error'))
+                <div class="alert-error-msg">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px; flex-shrink: 0;">
+                        <circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
+                    </svg>
+                    <span>{{ session('error') }}</span>
+                </div>
+            @endif
+
             <!-- Flash Validation Errors -->
             @if ($errors->any())
                 <div class="alert-danger" style="background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.25); padding: 14px 18px; border-radius: 10px; color: #f87171; font-size: 13px; font-weight: 500; margin-bottom: 20px; display: flex; flex-direction: column; gap: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
@@ -133,6 +197,7 @@
                                     <th>Tahun</th>
                                     <th>Kondisi</th>
                                     <th>Keterangan</th>
+                                    <th></th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -152,6 +217,26 @@
                                     </td>
                                     <td style="font-size: 12px; color: rgba(255,255,255,0.5); max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="{{ $item->keterangan }}">
                                         {{ $item->keterangan ?? '-' }}
+                                    </td>
+                                    <td>
+                                        <div class="btn-action-group">
+                                            <button type="button" class="btn-edit" title="Edit Barang" onclick="openEditModal({{ json_encode($item) }})">
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                                                </svg>
+                                            </button>
+                                            <form action="{{ route('items.destroy', $item) }}" method="POST" onsubmit="return confirm('Yakin ingin menghapus barang ini?')" style="display:inline;">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="btn-delete-item" title="Hapus Barang">
+                                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                        <polyline points="3 6 5 6 21 6"/>
+                                                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                                                    </svg>
+                                                </button>
+                                            </form>
+                                        </div>
                                     </td>
                                 </tr>
                                 @endforeach
@@ -237,41 +322,171 @@
         </div>
     </div>
 
-    <!-- ===== SCRIPT UNTUK MODAL ===== -->
+    <!-- ===== MODAL EDIT BARANG ===== -->
+    <div class="modal-overlay" id="editModal">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h2 class="modal-title">Edit Barang</h2>
+                <button class="modal-close" id="btn-close-edit-modal">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+            
+            <form id="editForm" method="POST" class="modal-form">
+                @csrf
+                @method('PUT')
+                
+                <div class="form-group">
+                    <label for="edit_no_inventaris">Nomor Inventaris</label>
+                    <input type="text" id="edit_no_inventaris" name="no_inventaris" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="edit_nama_barang">Nama Barang</label>
+                    <input type="text" id="edit_nama_barang" name="nama_barang" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="edit_merk">Merk</label>
+                    <input type="text" id="edit_merk" name="merk">
+                </div>
+
+                <div class="form-group">
+                    <label for="edit_serial_number">Nomor Seri</label>
+                    <input type="text" id="edit_serial_number" name="serial_number">
+                </div>
+
+                <div class="form-group">
+                    <label for="edit_jumlah">Jumlah</label>
+                    <input type="number" id="edit_jumlah" name="jumlah" min="0" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="edit_nama_pengadaan">Nama Pengadaan</label>
+                    <input type="text" id="edit_nama_pengadaan" name="nama_pengadaan">
+                </div>
+
+                <div class="form-group">
+                    <label for="edit_tahun_pengadaan">Tahun Pengadaan</label>
+                    <input type="number" id="edit_tahun_pengadaan" name="tahun_pengadaan" min="1900" max="{{ date('Y') + 1 }}">
+                </div>
+
+                <div class="form-group">
+                    <label for="edit_kondisi_barang">Kondisi</label>
+                    <select id="edit_kondisi_barang" name="kondisi_barang" required>
+                        <option value="baik">Baik</option>
+                        <option value="rusak_ringan">Rusak Ringan</option>
+                        <option value="rusak_berat">Rusak Berat</option>
+                        <option value="hilang">Hilang</option>
+                    </select>
+                </div>
+
+                <div class="form-group form-field-full">
+                    <label for="edit_keterangan">Keterangan</label>
+                    <textarea id="edit_keterangan" name="keterangan"></textarea>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn-cancel" id="btn-cancel-edit-modal">Batal</button>
+                    <button type="submit" class="btn-submit">Simpan Perubahan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ===== SCRIPTS ===== -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const modal = document.getElementById('tambahModal');
+            // ===== TAMBAH MODAL =====
+            const tambahModal = document.getElementById('tambahModal');
             const btnOpen = document.getElementById('btn-tambah-barang');
             const btnClose = document.getElementById('btn-close-modal');
             const btnCancel = document.getElementById('btn-cancel-modal');
 
-            // Open Modal
             if (btnOpen) {
                 btnOpen.addEventListener('click', function() {
-                    modal.classList.add('active');
+                    tambahModal.classList.add('active');
                 });
             }
 
-            // Close Modal
-            const closeModal = function() {
-                modal.classList.remove('active');
+            const closeTambahModal = function() {
+                tambahModal.classList.remove('active');
             };
 
-            if (btnClose) btnClose.addEventListener('click', closeModal);
-            if (btnCancel) btnCancel.addEventListener('click', closeModal);
+            if (btnClose) btnClose.addEventListener('click', closeTambahModal);
+            if (btnCancel) btnCancel.addEventListener('click', closeTambahModal);
 
-            // Close modal when clicking outside container
-            modal.addEventListener('click', function(e) {
-                if (e.target === modal) {
-                    closeModal();
+            tambahModal.addEventListener('click', function(e) {
+                if (e.target === tambahModal) closeTambahModal();
+            });
+
+            // ===== EDIT MODAL =====
+            const editModal = document.getElementById('editModal');
+            const btnCloseEdit = document.getElementById('btn-close-edit-modal');
+            const btnCancelEdit = document.getElementById('btn-cancel-edit-modal');
+
+            const closeEditModal = function() {
+                editModal.classList.remove('active');
+            };
+
+            if (btnCloseEdit) btnCloseEdit.addEventListener('click', closeEditModal);
+            if (btnCancelEdit) btnCancelEdit.addEventListener('click', closeEditModal);
+
+            editModal.addEventListener('click', function(e) {
+                if (e.target === editModal) closeEditModal();
+            });
+
+            // Keep tambah modal open if there are validation errors (for store)
+            @if ($errors->any() && !old('_method'))
+                tambahModal.classList.add('active');
+            @endif
+
+            // Keep edit modal open if there are validation errors (for update)
+            @if ($errors->any() && old('_method') === 'PUT')
+                editModal.classList.add('active');
+            @endif
+
+            // ESC key to close modals
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    closeTambahModal();
+                    closeEditModal();
                 }
             });
 
-            // Keep modal open if there are validation errors
-            @if ($errors->any())
-                modal.classList.add('active');
-            @endif
+            // Auto-dismiss success alerts
+            document.querySelectorAll('.alert-success, .alert-error-msg').forEach(function(alert) {
+                setTimeout(function() {
+                    alert.style.opacity = '0';
+                    alert.style.transition = 'opacity 0.3s ease';
+                    setTimeout(function() { alert.remove(); }, 300);
+                }, 5000);
+            });
         });
+
+        function openEditModal(item) {
+            const editModal = document.getElementById('editModal');
+            const editForm = document.getElementById('editForm');
+
+            // Set form action URL
+            editForm.action = '/daftar-barang/' + item.id;
+
+            // Fill in fields
+            document.getElementById('edit_no_inventaris').value = item.no_inventaris || '';
+            document.getElementById('edit_nama_barang').value = item.nama_barang || '';
+            document.getElementById('edit_merk').value = item.merk || '';
+            document.getElementById('edit_serial_number').value = item.serial_number || '';
+            document.getElementById('edit_jumlah').value = item.jumlah || 0;
+            document.getElementById('edit_nama_pengadaan').value = item.nama_pengadaan || '';
+            document.getElementById('edit_tahun_pengadaan').value = item.tahun_pengadaan || '';
+            document.getElementById('edit_kondisi_barang').value = item.kondisi_barang || 'baik';
+            document.getElementById('edit_keterangan').value = item.keterangan || '';
+
+            editModal.classList.add('active');
+        }
     </script>
 </body>
 </html>

@@ -17,14 +17,6 @@ class ItemController extends Controller
     }
 
     /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
      * Store a newly created resource in storage.
      */
     public function store(Request $request)
@@ -50,27 +42,25 @@ class ItemController extends Controller
     }
 
     /**
-     * Display the specified resource.
-     */
-    public function show(Item $item)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Item $item)
-    {
-        //
-    }
-
-    /**
      * Update the specified resource in storage.
      */
     public function update(Request $request, Item $item)
     {
-        //
+        $validated = $request->validate([
+            'no_inventaris' => 'required|string|unique:items,no_inventaris,' . $item->id,
+            'nama_barang' => 'required|string|max:255',
+            'merk' => 'nullable|string|max:255',
+            'serial_number' => 'nullable|string|max:255',
+            'jumlah' => 'required|integer|min:0',
+            'nama_pengadaan' => 'nullable|string|max:255',
+            'tahun_pengadaan' => 'nullable|integer|min:1900|max:' . (date('Y') + 1),
+            'kondisi_barang' => 'required|in:baik,rusak_ringan,rusak_berat,hilang',
+            'keterangan' => 'nullable|string',
+        ]);
+
+        $item->update($validated);
+
+        return redirect()->route('item')->with('success', 'Data barang berhasil diperbarui!');
     }
 
     /**
@@ -78,9 +68,20 @@ class ItemController extends Controller
      */
     public function destroy(Item $item)
     {
-        //
+        // Check if item has active outgoings
+        if ($item->outgoings()->exists()) {
+            return redirect()->route('item')
+                ->with('error', 'Barang tidak bisa dihapus karena masih memiliki data barang keluar terkait.');
+        }
+
+        $item->delete();
+
+        return redirect()->route('item')->with('success', 'Barang berhasil dihapus!');
     }
 
+    /**
+     * Store via AJAX (for quick-add in outgoing form)
+     */
     public function storeAjax(Request $request)
     {
         $request->validate([
