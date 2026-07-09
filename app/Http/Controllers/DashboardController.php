@@ -43,8 +43,8 @@ class DashboardController extends Controller
                 ->sum('jumlah_keluar');
         }
 
-        // --- Daftar Peminjam (latest outgoings with user info) ---
-        $daftarPeminjam = ItemOutgoing::with(['user', 'item'])
+        // --- Daftar Peminjam (latest outgoings with borrower info) ---
+        $daftarPeminjam = ItemOutgoing::with(['borrower', 'item'])
             ->orderByDesc('tanggal_keluar')
             ->orderByDesc('created_at')
             ->limit(10)

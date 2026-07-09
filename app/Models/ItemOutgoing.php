@@ -10,7 +10,7 @@ class ItemOutgoing extends Model
     use HasFactory;
 
     protected $fillable = [
-        'item_id', 'user_id', 'recorded_by',
+        'item_id', 'borrower_id', 'recorded_by',
         'jumlah_keluar', 'tanggal_keluar',
         'keperluan', 'keterangan',
     ];
@@ -24,9 +24,9 @@ class ItemOutgoing extends Model
         return $this->belongsTo(Item::class);
     }
 
-    public function user()
+    public function borrower()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(Borrower::class);
     }
 
     public function recorder()

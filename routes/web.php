@@ -2,7 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\ItemController;
+use App\Http\Controllers\ItemOutgoingController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -27,10 +27,16 @@ Route::get('/dashboard', [DashboardController::class, 'index'])
     ->name('dashboard')
     ->middleware('auth');
 
-Route::get('/item-list', [ItemController::class, 'index'])
-    ->name('item')
-    ->middleware('auth');
-
-Route::post('/item-list', [ItemController::class, 'store'])
-    ->name('items.store')
-    ->middleware('auth');
+// Barang Keluar
+Route::middleware('auth')->group(function () {
+    Route::get('/barang-keluar', [ItemOutgoingController::class, 'index'])
+        ->name('item-outgoing.index');
+    Route::post('/barang-keluar', [ItemOutgoingController::class, 'store'])
+        ->name('item-outgoing.store');
+    Route::delete('/barang-keluar/{itemOutgoing}', [ItemOutgoingController::class, 'destroy'])
+        ->name('item-outgoing.destroy');
+        
+    // AJAX endpoins
+    Route::post('/ajax/items', [\App\Http\Controllers\ItemController::class, 'storeAjax'])->name('items.storeAjax');
+    Route::post('/ajax/borrowers', [\App\Http\Controllers\BorrowerController::class, 'storeAjax'])->name('borrowers.storeAjax');
+});

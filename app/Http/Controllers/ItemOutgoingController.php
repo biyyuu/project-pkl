@@ -2,25 +2,63 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Item;
+use App\Models\ItemHistory;
 use App\Models\ItemOutgoing;
+use App\Models\Borrower;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ItemOutgoingController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        //
-    }
+        $user = auth()->user();
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
+        $query = ItemOutgoing::with(['item', 'borrower', 'recorder']);
+
+        // Search filter
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->whereHas('item', function ($q2) use ($search) {
+                    $q2->where('nama_barang', 'like', "%{$search}%")
+                       ->orWhere('no_inventaris', 'like', "%{$search}%");
+                })
+                ->orWhereHas('borrower', function ($q2) use ($search) {
+                    $q2->where('nama', 'like', "%{$search}%");
+                })
+                ->orWhere('keperluan', 'like', "%{$search}%");
+            });
+        }
+
+        // Date range filter
+        if ($request->filled('start_date') && $request->filled('end_date')) {
+            $query->whereBetween('tanggal_keluar', [$request->start_date, $request->end_date]);
+        } elseif ($request->filled('start_date')) {
+            $query->whereDate('tanggal_keluar', '>=', $request->start_date);
+        } elseif ($request->filled('end_date')) {
+            $query->whereDate('tanggal_keluar', '<=', $request->end_date);
+        }
+
+        $outgoings = $query->orderByDesc('tanggal_keluar')
+            ->orderByDesc('created_at')
+            ->paginate(15)
+            ->withQueryString();
+
+        // Get available items for the modal (items with stock > 0)
+        $items = Item::where('jumlah', '>', 0)
+            ->where('kondisi_barang', 'baik')
+            ->orderBy('nama_barang')
+            ->get();
+
+        // Get all borrowers for the modal
+        $borrowers = Borrower::orderBy('nama')->get();
+
+        return view('item-outgoing', compact('user', 'outgoings', 'items', 'borrowers'));
     }
 
     /**
@@ -28,31 +66,54 @@ class ItemOutgoingController extends Controller
      */
     public function store(Request $request)
     {
-        //
-    }
+        $request->validate([
+            'item_id' => 'required|exists:items,id',
+            'borrower_id' => 'required|exists:borrowers,id',
+            'jumlah_keluar' => 'required|integer|min:1',
+            'tanggal_keluar' => 'required|date',
+            'keperluan' => 'nullable|string|max:255',
+            'keterangan' => 'nullable|string',
+        ]);
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(ItemOutgoing $itemOutgoing)
-    {
-        //
-    }
+        $item = Item::findOrFail($request->item_id);
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(ItemOutgoing $itemOutgoing)
-    {
-        //
-    }
+        // Check if enough stock
+        if ($item->jumlah < $request->jumlah_keluar) {
+            return back()
+                ->withInput()
+                ->withErrors(['jumlah_keluar' => 'Stok tidak mencukupi. Stok tersedia: ' . $item->jumlah]);
+        }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, ItemOutgoing $itemOutgoing)
-    {
-        //
+        DB::transaction(function () use ($request, $item) {
+            $jumlahSebelum = $item->jumlah;
+
+            // Create outgoing record
+            ItemOutgoing::create([
+                'item_id' => $request->item_id,
+                'borrower_id' => $request->borrower_id,
+                'recorded_by' => auth()->id(),
+                'jumlah_keluar' => $request->jumlah_keluar,
+                'tanggal_keluar' => $request->tanggal_keluar,
+                'keperluan' => $request->keperluan,
+                'keterangan' => $request->keterangan,
+            ]);
+
+            // Decrease stock
+            $item->decrement('jumlah', $request->jumlah_keluar);
+
+            // Log history
+            ItemHistory::create([
+                'item_id' => $request->item_id,
+                'user_id' => auth()->id(),
+                'action' => 'keluar',
+                'jumlah_sebelum' => $jumlahSebelum,
+                'jumlah_sesudah' => $jumlahSebelum - $request->jumlah_keluar,
+                'deskripsi' => 'Barang keluar: ' . $request->jumlah_keluar . ' unit untuk ' . ($request->keperluan ?? 'tidak disebutkan'),
+            ]);
+        });
+
+        return redirect()->route('item-outgoing.index')
+            ->with('success', 'Barang keluar berhasil dicatat.');
     }
 
     /**
@@ -60,6 +121,26 @@ class ItemOutgoingController extends Controller
      */
     public function destroy(ItemOutgoing $itemOutgoing)
     {
-        //
+        DB::transaction(function () use ($itemOutgoing) {
+            // Restore stock
+            $item = $itemOutgoing->item;
+            $jumlahSebelum = $item->jumlah;
+            $item->increment('jumlah', $itemOutgoing->jumlah_keluar);
+
+            // Log history
+            ItemHistory::create([
+                'item_id' => $itemOutgoing->item_id,
+                'user_id' => auth()->id(),
+                'action' => 'edit',
+                'jumlah_sebelum' => $jumlahSebelum,
+                'jumlah_sesudah' => $jumlahSebelum + $itemOutgoing->jumlah_keluar,
+                'deskripsi' => 'Pembatalan barang keluar: ' . $itemOutgoing->jumlah_keluar . ' unit dikembalikan ke stok',
+            ]);
+
+            $itemOutgoing->delete();
+        });
+
+        return redirect()->route('item-outgoing.index')
+            ->with('success', 'Data barang keluar berhasil dihapus dan stok dikembalikan.');
     }
 }
