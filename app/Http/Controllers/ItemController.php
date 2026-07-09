@@ -62,4 +62,29 @@ class ItemController extends Controller
     {
         //
     }
+
+    public function storeAjax(Request $request)
+    {
+        $request->validate([
+            'no_inventaris' => 'required|string|unique:items,no_inventaris',
+            'nama_barang' => 'required|string|max:255',
+            'merk' => 'nullable|string|max:255',
+            'serial_number' => 'nullable|string|max:255',
+            'jumlah' => 'required|integer|min:1',
+            'kondisi_barang' => 'required|in:baik,rusak_ringan,rusak_berat,hilang',
+        ]);
+
+        $data = $request->only([
+            'no_inventaris', 'nama_barang', 'merk', 'serial_number', 'jumlah', 'kondisi_barang'
+        ]);
+        $data['user_id'] = auth()->id();
+        $data['created_by'] = auth()->id();
+
+        $item = Item::create($data);
+
+        return response()->json([
+            'success' => true,
+            'data' => $item
+        ]);
+    }
 }
