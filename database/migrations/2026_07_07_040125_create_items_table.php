@@ -19,6 +19,7 @@ return new class extends Migration
             $table->year('tahun_pengadaan')->nullable();
             $table->enum('kondisi_barang', ['baik', 'rusak_ringan', 'rusak_berat', 'hilang'])
                   ->default('baik');
+            $table->text('keterangan')->nullable();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->foreignId('created_by')->nullable()->constrained('users')->onDelete('set null');
             $table->timestamps();

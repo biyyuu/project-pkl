@@ -52,7 +52,6 @@
 
         .hero-overlay {
             position: absolute;
-            object-fit:
             bottom: 0;
             left: 0;
             right: 0;
@@ -69,10 +68,10 @@
             font-size: 36px;
             font-weight: 900;
             line-height: 1.1;
-            letter-spacing: -0.5px;
+            letter-spacing: 2px;
             color: #ffffff;
             text-transform: uppercase;
-            margin-bottom: 8px;
+            margin-bottom: 15px;
         }
 
         .hero-subtitle {
