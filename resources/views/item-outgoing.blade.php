@@ -766,6 +766,33 @@
             height: 14px;
         }
 
+        /* ===== SELESAI BUTTON ===== */
+        .btn-selesai {
+            background: none;
+            border: none;
+            color: #34d399;
+            cursor: pointer;
+            padding: 5px 10px;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-family: 'Inter', sans-serif;
+            font-size: 11px;
+            font-weight: 600;
+            border: 1px solid rgba(52, 211, 153, 0.25);
+        }
+
+        .btn-selesai:hover {
+            background: rgba(52, 211, 153, 0.08);
+        }
+
+        .btn-selesai svg {
+            width: 13px;
+            height: 13px;
+        }
+
         /* ===== SCROLL AREA ===== */
         .scroll-area {
             scrollbar-width: thin;
@@ -897,7 +924,26 @@
             <!-- Header -->
             <div class="header">
                 <div class="header-left">
-                    <h1>Halo, {{ $user->name }}!</h1>
+                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 4px;">
+                        <h1 style="margin-bottom: 0;">Halo, {{ $user->name }}!</h1>
+                        @php
+                            $roleLabels = [
+                                'admin' => 'Admin',
+                                'kasub' => 'Kasub',
+                                'kabid' => 'Kabid',
+                            ];
+                            $roleColors = [
+                                'admin' => 'background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #f87171;',
+                                'kasub' => 'background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); color: #34d399;',
+                                'kabid' => 'background: rgba(251, 191, 36, 0.15); border: 1px solid rgba(251, 191, 36, 0.3); color: #fbbf24;',
+                            ];
+                            $label = $roleLabels[$user->role] ?? ucfirst($user->role);
+                            $style = $roleColors[$user->role] ?? 'background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: #ffffff;';
+                        @endphp
+                        <span style="font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px; {{ $style }}">
+                            {{ $label }}
+                        </span>
+                    </div>
                     <p>Siap memonitoring inventaris?</p>
                 </div>
                 <div class="header-right">
@@ -956,6 +1002,7 @@
                         <div class="content-card-title">Barang Keluar</div>
                         <div class="content-card-subtitle">Pantau barang yang dipinjam setiap divisi.</div>
                     </div>
+                    @if(auth()->user()->role !== 'kabid')
                     <button class="btn-pinjam" id="btn-pinjam-open" onclick="openModal()">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <line x1="12" y1="5" x2="12" y2="19"/>
@@ -963,6 +1010,7 @@
                         </svg>
                         Pinjam Barang
                     </button>
+                    @endif
                 </div>
 
                 <!-- Toolbar -->
@@ -1008,7 +1056,9 @@
                                     <th>Keperluan</th>
                                     <th>Keterangan</th>
                                     <th>Dicatat Oleh</th>
+                                    @if(auth()->user()->role !== 'kabid')
                                     <th></th>
+                                    @endif
                                 </tr>
                             </thead>
                             <tbody>
@@ -1025,6 +1075,7 @@
                                     <td>{{ $outgoing->keperluan ?? '-' }}</td>
                                     <td style="max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ $outgoing->keterangan ?? '-' }}</td>
                                     <td style="font-size: 12px; color: rgba(255,255,255,0.4);">{{ $outgoing->recorder->name ?? '-' }}</td>
+                                    @if(auth()->user()->role !== 'kabid')
                                     <td>
                                         <div style="display:flex; gap:6px; align-items:center;">
                                             <button type="button" class="btn-delete" title="Edit" style="color: #fbbf24;" onclick='openEditOutgoingModal(@json($outgoing))'>
@@ -1033,18 +1084,15 @@
                                                     <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
                                                 </svg>
                                             </button>
-                                            <form action="{{ route('item-outgoing.destroy', $outgoing) }}" method="POST" onsubmit="return confirm('Hapus data barang keluar ini? Stok akan dikembalikan.')" style="display:inline;">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="btn-delete" title="Hapus dan kembalikan stok">
-                                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                                        <polyline points="3 6 5 6 21 6"/>
-                                                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-                                                    </svg>
-                                                </button>
-                                            </form>
+                                             <button type="button" class="btn-selesai" title="Selesaikan transaksi & kembalikan stok" onclick="confirmSelesai('{{ route('item-outgoing.destroy', $outgoing) }}')">
+                                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                                     <polyline points="20 6 9 17 4 12"/>
+                                                 </svg>
+                                                 Selesai
+                                             </button>
                                         </div>
                                     </td>
+                                    @endif
                                 </tr>
                                 @endforeach
                             </tbody>
@@ -1328,6 +1376,37 @@
         </div>
     </div>
 
+    <!-- ===== MODAL: Konfirmasi Selesai ===== -->
+    <div class="modal-overlay" id="modal-overlay-selesai">
+        <div class="modal" style="width: 420px; text-align: center;">
+            <div class="modal-body" style="padding: 32px 24px;">
+                <div style="width: 64px; height: 64px; border-radius: 50%; background: rgba(52, 211, 153, 0.1); border: 1px solid rgba(52, 211, 153, 0.2); color: #34d399; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px auto;">
+                    <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                </div>
+                <h3 style="font-size: 18px; font-weight: 700; color: #ffffff; margin-bottom: 8px;">Selesaikan Transaksi?</h3>
+                <p style="font-size: 13px; color: rgba(255,255,255,0.6); line-height: 1.5; margin-bottom: 24px;">
+                    Menandai transaksi ini selesai akan mengembalikan stok barang ke daftar barang dan mencatatnya ke riwayat aktivitas.
+                </p>
+                
+                <form id="form-selesai-transaksi" method="POST" style="display: none;">
+                    @csrf
+                    @method('DELETE')
+                </form>
+                
+                <div style="display: flex; gap: 12px; justify-content: center;">
+                    <button type="button" onclick="closeSelesaiModal()" style="flex: 1; padding: 11px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.04); color: #ffffff; font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s ease;">
+                        Batal
+                    </button>
+                    <button type="button" onclick="submitSelesaiForm()" style="flex: 1; padding: 11px; border-radius: 8px; border: none; background: #10b981; color: #ffffff; font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s ease;">
+                        Ya, Selesai
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         // ===== MODAL =====
         function openModal() {
@@ -1531,6 +1610,34 @@
 
         document.getElementById('modal-overlay-edit-outgoing').addEventListener('click', function(e) {
             if (e.target === this) closeEditOutgoingModal();
+        });
+
+        // ===== CONFIRM SELESAI MODAL =====
+        function confirmSelesai(actionUrl) {
+            const overlay = document.getElementById('modal-overlay-selesai');
+            const form = document.getElementById('form-selesai-transaksi');
+            form.action = actionUrl;
+            
+            overlay.style.display = 'flex';
+            requestAnimationFrame(() => overlay.classList.add('show'));
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeSelesaiModal() {
+            const overlay = document.getElementById('modal-overlay-selesai');
+            overlay.classList.remove('show');
+            setTimeout(() => {
+                overlay.style.display = 'none';
+            }, 250);
+            document.body.style.overflow = '';
+        }
+
+        function submitSelesaiForm() {
+            document.getElementById('form-selesai-transaksi').submit();
+        }
+
+        document.getElementById('modal-overlay-selesai').addEventListener('click', function(e) {
+            if (e.target === this) closeSelesaiModal();
         });
     </script>
 </body>

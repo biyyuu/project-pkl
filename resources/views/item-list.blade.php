@@ -122,9 +122,30 @@
         <main class="main-content">
             <div class="header">
                 <div class="header-left">
-                    <h1>Daftar Barang</h1>
+                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 4px;">
+                        <h1 style="margin-bottom: 0;">Halo, {{ auth()->user()->name }}!</h1>
+                        @php
+                            $roleLabels = [
+                                'admin' => 'Admin',
+                                'kasub' => 'Kasub',
+                                'kabid' => 'Kabid',
+                            ];
+                            $roleColors = [
+                                'admin' => 'background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #f87171;',
+                                'kasub' => 'background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); color: #34d399;',
+                                'kabid' => 'background: rgba(251, 191, 36, 0.15); border: 1px solid rgba(251, 191, 36, 0.3); color: #fbbf24;',
+                            ];
+                            $roleName = auth()->user()->role;
+                            $label = $roleLabels[$roleName] ?? ucfirst($roleName);
+                            $style = $roleColors[$roleName] ?? 'background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: #ffffff;';
+                        @endphp
+                        <span style="font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px; {{ $style }}">
+                            {{ $label }}
+                        </span>
+                    </div>
                     <p>Siap memonitoring inventaris?</p>
                 </div>
+                @if(auth()->user()->role !== 'kabid')
                 <button class="btn-export" id="btn-tambah-barang">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <line x1="12" y1="5" x2="12" y2="19"/>
@@ -132,6 +153,7 @@
                     </svg>
                     Tambah Barang
                 </button>
+                @endif
             </div>
 
             <!-- Flash Success Message -->
@@ -197,7 +219,9 @@
                                     <th>Tahun</th>
                                     <th>Kondisi</th>
                                     <th>Keterangan</th>
+                                    @if(auth()->user()->role !== 'kabid')
                                     <th></th>
+                                    @endif
                                 </tr>
                             </thead>
                             <tbody>
@@ -218,6 +242,7 @@
                                     <td style="font-size: 12px; color: rgba(255,255,255,0.5); max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="{{ $item->keterangan }}">
                                         {{ $item->keterangan ?? '-' }}
                                     </td>
+                                    @if(auth()->user()->role !== 'kabid')
                                     <td>
                                         <div class="btn-action-group">
                                             <button type="button" class="btn-edit" title="Edit Barang" onclick="openEditModal({{ json_encode($item) }})">
@@ -238,6 +263,7 @@
                                             </form>
                                         </div>
                                     </td>
+                                    @endif
                                 </tr>
                                 @endforeach
                             </tbody>

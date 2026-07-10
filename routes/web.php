@@ -30,26 +30,32 @@ Route::get('/dashboard', [DashboardController::class, 'index'])
 // Daftar Barang
 Route::middleware('auth')->group(function () {
     Route::get('/daftar-barang', [\App\Http\Controllers\ItemController::class, 'index'])->name('item');
-    Route::post('/daftar-barang', [\App\Http\Controllers\ItemController::class, 'store'])->name('items.store');
-    Route::put('/daftar-barang/{item}', [\App\Http\Controllers\ItemController::class, 'update'])->name('items.update');
-    Route::delete('/daftar-barang/{item}', [\App\Http\Controllers\ItemController::class, 'destroy'])->name('items.destroy');
+
+    Route::middleware('role:admin,kasub')->group(function () {
+        Route::post('/daftar-barang', [\App\Http\Controllers\ItemController::class, 'store'])->name('items.store');
+        Route::put('/daftar-barang/{item}', [\App\Http\Controllers\ItemController::class, 'update'])->name('items.update');
+        Route::delete('/daftar-barang/{item}', [\App\Http\Controllers\ItemController::class, 'destroy'])->name('items.destroy');
+    });
 });
 
 // Barang Keluar
 Route::middleware('auth')->group(function () {
     Route::get('/barang-keluar', [ItemOutgoingController::class, 'index'])
         ->name('item-outgoing.index');
-    Route::post('/barang-keluar', [ItemOutgoingController::class, 'store'])
-        ->name('item-outgoing.store');
-    Route::put('/barang-keluar/{itemOutgoing}', [ItemOutgoingController::class, 'update'])
-        ->name('item-outgoing.update');
-    Route::delete('/barang-keluar/{itemOutgoing}', [ItemOutgoingController::class, 'destroy'])
-        ->name('item-outgoing.destroy');
+
+    Route::middleware('role:admin,kasub')->group(function () {
+        Route::post('/barang-keluar', [ItemOutgoingController::class, 'store'])
+            ->name('item-outgoing.store');
+        Route::put('/barang-keluar/{itemOutgoing}', [ItemOutgoingController::class, 'update'])
+            ->name('item-outgoing.update');
+        Route::delete('/barang-keluar/{itemOutgoing}', [ItemOutgoingController::class, 'destroy'])
+            ->name('item-outgoing.destroy');
+            
+        // AJAX endpoints
+        Route::post('/ajax/items', [\App\Http\Controllers\ItemController::class, 'storeAjax'])->name('items.storeAjax');
+        Route::post('/ajax/borrowers', [\App\Http\Controllers\BorrowerController::class, 'storeAjax'])->name('borrowers.storeAjax');
+    });
         
     // Reports
     Route::get('/export/laporan', [DashboardController::class, 'exportPdf'])->name('export.pdf');
-
-    // AJAX endpoints
-    Route::post('/ajax/items', [\App\Http\Controllers\ItemController::class, 'storeAjax'])->name('items.storeAjax');
-    Route::post('/ajax/borrowers', [\App\Http\Controllers\BorrowerController::class, 'storeAjax'])->name('borrowers.storeAjax');
 });

@@ -198,16 +198,16 @@ class ItemOutgoingController extends Controller
             ItemHistory::create([
                 'item_id' => $itemOutgoing->item_id,
                 'user_id' => auth()->id(),
-                'action' => 'edit',
+                'action' => 'selesai',
                 'jumlah_sebelum' => $jumlahSebelum,
                 'jumlah_sesudah' => $jumlahSebelum + $itemOutgoing->jumlah_keluar,
-                'deskripsi' => 'Pembatalan barang keluar: ' . $itemOutgoing->jumlah_keluar . ' unit dikembalikan ke stok',
+                'deskripsi' => 'Peminjaman selesai: ' . $itemOutgoing->jumlah_keluar . ' unit barang telah dikembalikan ke stok.',
             ]);
 
             $itemOutgoing->delete();
         });
 
         return redirect()->route('item-outgoing.index')
-            ->with('success', 'Data barang keluar berhasil dihapus dan stok dikembalikan.');
+            ->with('success', 'Transaksi berhasil diselesaikan. Stok barang telah dikembalikan.');
     }
 }
