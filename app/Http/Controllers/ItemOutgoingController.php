@@ -84,10 +84,8 @@ class ItemOutgoingController extends Controller
                 ->withErrors(['jumlah_keluar' => 'Stok tidak mencukupi. Stok tersedia: ' . $item->jumlah]);
         }
 
-        DB::transaction(function () use ($request, $item) {
-            $jumlahSebelum = $item->jumlah;
-
-            // Create outgoing record
+        DB::transaction(function () use ($request) {
+            // Create outgoing record (status will be pending by default)
             ItemOutgoing::create([
                 'item_id' => $request->item_id,
                 'borrower_id' => $request->borrower_id,
@@ -96,19 +94,7 @@ class ItemOutgoingController extends Controller
                 'tanggal_keluar' => $request->tanggal_keluar,
                 'keperluan' => $request->keperluan,
                 'keterangan' => $request->keterangan,
-            ]);
-
-            // Decrease stock
-            $item->decrement('jumlah', $request->jumlah_keluar);
-
-            // Log history
-            ItemHistory::create([
-                'item_id' => $request->item_id,
-                'user_id' => auth()->id(),
-                'action' => 'keluar',
-                'jumlah_sebelum' => $jumlahSebelum,
-                'jumlah_sesudah' => $jumlahSebelum - $request->jumlah_keluar,
-                'deskripsi' => 'Barang keluar: ' . $request->jumlah_keluar . ' unit untuk ' . ($request->keperluan ?? 'tidak disebutkan'),
+                'status' => 'pending',
             ]);
         });
 
@@ -136,27 +122,29 @@ class ItemOutgoingController extends Controller
         $newJumlah = $request->jumlah_keluar;
 
         DB::transaction(function () use ($request, $itemOutgoing, $oldItem, $newItem, $oldJumlah, $newJumlah) {
-            // If same item, adjust the difference
-            if ($oldItem->id === $newItem->id) {
-                $diff = $newJumlah - $oldJumlah;
-                if ($diff > 0 && $newItem->jumlah < $diff) {
-                    throw new \Exception('Stok tidak mencukupi. Stok tersedia: ' . $newItem->jumlah);
-                }
-                if ($diff !== 0) {
-                    if ($diff > 0) {
-                        $newItem->decrement('jumlah', $diff);
-                    } else {
-                        $newItem->increment('jumlah', abs($diff));
+            if ($itemOutgoing->status === 'approved') {
+                // If same item, adjust the difference
+                if ($oldItem->id === $newItem->id) {
+                    $diff = $newJumlah - $oldJumlah;
+                    if ($diff > 0 && $newItem->jumlah < $diff) {
+                        throw new \Exception('Stok tidak mencukupi. Stok tersedia: ' . $newItem->jumlah);
                     }
+                    if ($diff !== 0) {
+                        if ($diff > 0) {
+                            $newItem->decrement('jumlah', $diff);
+                        } else {
+                            $newItem->increment('jumlah', abs($diff));
+                        }
+                    }
+                } else {
+                    // Restore old item stock
+                    $oldItem->increment('jumlah', $oldJumlah);
+                    // Deduct from new item stock
+                    if ($newItem->jumlah < $newJumlah) {
+                        throw new \Exception('Stok tidak mencukupi. Stok tersedia: ' . $newItem->jumlah);
+                    }
+                    $newItem->decrement('jumlah', $newJumlah);
                 }
-            } else {
-                // Restore old item stock
-                $oldItem->increment('jumlah', $oldJumlah);
-                // Deduct from new item stock
-                if ($newItem->jumlah < $newJumlah) {
-                    throw new \Exception('Stok tidak mencukupi. Stok tersedia: ' . $newItem->jumlah);
-                }
-                $newItem->decrement('jumlah', $newJumlah);
             }
 
             $itemOutgoing->update([
@@ -168,15 +156,17 @@ class ItemOutgoingController extends Controller
                 'keterangan' => $request->keterangan,
             ]);
 
-            // Log history
-            ItemHistory::create([
-                'item_id' => $request->item_id,
-                'user_id' => auth()->id(),
-                'action' => 'edit',
-                'jumlah_sebelum' => $oldJumlah,
-                'jumlah_sesudah' => $newJumlah,
-                'deskripsi' => 'Edit data barang keluar',
-            ]);
+            if ($itemOutgoing->status === 'approved') {
+                // Log history
+                ItemHistory::create([
+                    'item_id' => $request->item_id,
+                    'user_id' => auth()->id(),
+                    'action' => 'edit',
+                    'jumlah_sebelum' => $oldJumlah,
+                    'jumlah_sesudah' => $newJumlah,
+                    'deskripsi' => 'Edit data barang keluar yang sudah di-approve',
+                ]);
+            }
         });
 
         return redirect()->route('item-outgoing.index')
@@ -189,20 +179,22 @@ class ItemOutgoingController extends Controller
     public function destroy(ItemOutgoing $itemOutgoing)
     {
         DB::transaction(function () use ($itemOutgoing) {
-            // Restore stock
-            $item = $itemOutgoing->item;
-            $jumlahSebelum = $item->jumlah;
-            $item->increment('jumlah', $itemOutgoing->jumlah_keluar);
+            if ($itemOutgoing->status === 'approved') {
+                // Restore stock
+                $item = $itemOutgoing->item;
+                $jumlahSebelum = $item->jumlah;
+                $item->increment('jumlah', $itemOutgoing->jumlah_keluar);
 
-            // Log history
-            ItemHistory::create([
-                'item_id' => $itemOutgoing->item_id,
-                'user_id' => auth()->id(),
-                'action' => 'edit',
-                'jumlah_sebelum' => $jumlahSebelum,
-                'jumlah_sesudah' => $jumlahSebelum + $itemOutgoing->jumlah_keluar,
-                'deskripsi' => 'Pembatalan barang keluar: ' . $itemOutgoing->jumlah_keluar . ' unit dikembalikan ke stok',
-            ]);
+                // Log history
+                ItemHistory::create([
+                    'item_id' => $itemOutgoing->item_id,
+                    'user_id' => auth()->id(),
+                    'action' => 'edit',
+                    'jumlah_sebelum' => $jumlahSebelum,
+                    'jumlah_sesudah' => $jumlahSebelum + $itemOutgoing->jumlah_keluar,
+                    'deskripsi' => 'Pembatalan barang keluar: ' . $itemOutgoing->jumlah_keluar . ' unit dikembalikan ke stok',
+                ]);
+            }
 
             $itemOutgoing->delete();
         });

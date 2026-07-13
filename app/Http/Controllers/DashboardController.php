@@ -145,4 +145,22 @@ class DashboardController extends Controller
 
         return $pdf->download("Laporan_Peminjaman_Inventaris_{$monthName}_{$year}.pdf");
     }
+
+    public function history(Request $request)
+    {
+        $user = auth()->user();
+        
+        $query = \App\Models\ItemHistory::with(['item', 'user'])->orderByDesc('created_at');
+        
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->whereHas('item', function ($q) use ($search) {
+                $q->where('nama_barang', 'like', "%{$search}%");
+            });
+        }
+        
+        $histories = $query->paginate(15)->withQueryString();
+        
+        return view('history', compact('user', 'histories'));
+    }
 }

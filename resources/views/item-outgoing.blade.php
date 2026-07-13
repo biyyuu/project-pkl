@@ -842,55 +842,7 @@
 <body>
     <div class="app-layout">
         <!-- ===== SIDEBAR ===== -->
-        <aside class="sidebar" id="sidebar">
-            <div class="sidebar-brand">
-                <img src="{{ asset('images/kemenhan-logo.png') }}" alt="Logo">
-                <span class="sidebar-brand-text">Inventaris<br>Kemenhan Pusdatin</span>
-            </div>
-
-            <nav class="sidebar-nav">
-                <a href="{{ route('dashboard') }}" class="nav-item" id="nav-dashboard">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-                        <polyline points="9 22 9 12 15 12 15 22"/>
-                    </svg>
-                    Dashboard
-                </a>
-                <a href="{{ route('item') }}" class="nav-item" id="nav-daftar-barang">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="8" y1="6" x2="21" y2="6"/>
-                        <line x1="8" y1="12" x2="21" y2="12"/>
-                        <line x1="8" y1="18" x2="21" y2="18"/>
-                        <line x1="3" y1="6" x2="3.01" y2="6"/>
-                        <line x1="3" y1="12" x2="3.01" y2="12"/>
-                        <line x1="3" y1="18" x2="3.01" y2="18"/>
-                    </svg>
-                    Daftar Barang
-                </a>
-                <a href="{{ route('item-outgoing.index') }}" class="nav-item active" id="nav-barang-keluar">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                        <polyline points="17 8 12 3 7 8"/>
-                        <line x1="12" y1="3" x2="12" y2="15"/>
-                    </svg>
-                    Barang Keluar
-                </a>
-            </nav>
-
-            <div class="sidebar-footer">
-                <form action="{{ route('logout') }}" method="POST" id="logout-form">
-                    @csrf
-                    <button type="submit" class="logout-btn" id="logout-btn">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1-2-2h4"/>
-                            <polyline points="16 17 21 12 16 7"/>
-                            <line x1="21" y1="12" x2="9" y2="12"/>
-                        </svg>
-                        Log Out
-                    </button>
-                </form>
-            </div>
-        </aside>
+        @include('components.sidebar')
 
         <!-- ===== MAIN CONTENT ===== -->
         <main class="main-content">
@@ -956,6 +908,7 @@
                         <div class="content-card-title">Barang Keluar</div>
                         <div class="content-card-subtitle">Pantau barang yang dipinjam setiap divisi.</div>
                     </div>
+                    @unlessrole('kabid')
                     <button class="btn-pinjam" id="btn-pinjam-open" onclick="openModal()">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <line x1="12" y1="5" x2="12" y2="19"/>
@@ -963,6 +916,7 @@
                         </svg>
                         Pinjam Barang
                     </button>
+                    @endunlessrole
                 </div>
 
                 <!-- Toolbar -->
@@ -1005,6 +959,7 @@
                                     <th>Peminjam</th>
                                     <th>Jumlah</th>
                                     <th>Tanggal Keluar</th>
+                                    <th>Status</th>
                                     <th>Keperluan</th>
                                     <th>Keterangan</th>
                                     <th>Dicatat Oleh</th>
@@ -1022,10 +977,19 @@
                                     <td>{{ $outgoing->borrower->nama ?? '-' }}</td>
                                     <td>{{ $outgoing->jumlah_keluar }}</td>
                                     <td>{{ $outgoing->tanggal_keluar->translatedFormat('d M Y') }}</td>
+                                    <td>
+                                        <span class="status-badge" style="
+                                            background: {{ $outgoing->status === 'approved' ? 'rgba(34,197,94,0.12)' : ($outgoing->status === 'rejected' ? 'rgba(239,68,68,0.12)' : 'rgba(251,191,36,0.12)') }};
+                                            color: {{ $outgoing->status === 'approved' ? '#4ade80' : ($outgoing->status === 'rejected' ? '#f87171' : '#fbbf24') }};
+                                            padding: 4px 8px; border-radius: 4px; font-size:11px; font-weight: 600; text-transform: uppercase;">
+                                            {{ $outgoing->status }}
+                                        </span>
+                                    </td>
                                     <td>{{ $outgoing->keperluan ?? '-' }}</td>
                                     <td style="max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ $outgoing->keterangan ?? '-' }}</td>
                                     <td style="font-size: 12px; color: rgba(255,255,255,0.4);">{{ $outgoing->recorder->name ?? '-' }}</td>
                                     <td>
+                                        @unlessrole('kabid')
                                         <div style="display:flex; gap:6px; align-items:center;">
                                             <button type="button" class="btn-delete" title="Edit" style="color: #fbbf24;" onclick='openEditOutgoingModal(@json($outgoing))'>
                                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1033,10 +997,10 @@
                                                     <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
                                                 </svg>
                                             </button>
-                                            <form action="{{ route('item-outgoing.destroy', $outgoing) }}" method="POST" onsubmit="return confirm('Hapus data barang keluar ini? Stok akan dikembalikan.')" style="display:inline;">
+                                            <form action="{{ route('item-outgoing.destroy', $outgoing) }}" method="POST" onsubmit="return confirm('Hapus data barang keluar ini? Stok otomatis menyesuaikan.')" style="display:inline;">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="submit" class="btn-delete" title="Hapus dan kembalikan stok">
+                                                <button type="submit" class="btn-delete" title="Hapus">
                                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                                         <polyline points="3 6 5 6 21 6"/>
                                                         <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
@@ -1044,6 +1008,7 @@
                                                 </button>
                                             </form>
                                         </div>
+                                        @endunlessrole
                                     </td>
                                 </tr>
                                 @endforeach
