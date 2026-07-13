@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Barang Keluar - Kemenhan Pusdatin</title>
     <meta name="description" content="Halaman Barang Keluar Sistem Inventaris Kementerian Pertahanan Pusat Data dan Informasi">
+    <link rel="icon" href="{{ asset('images/kemenhan-logo.png') }}">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -826,6 +827,52 @@
             border-radius: 2px;
         }
 
+        /* ===== SELECT CLEARABLE ===== */
+        .select-clearable {
+            position: relative;
+            flex: 1;
+        }
+
+        .select-clearable select.form-control {
+            width: 100%;
+            padding-right: 36px;
+        }
+
+        .select-clearable.has-value select.form-control {
+            padding-right: 56px;
+        }
+
+        .select-clear-btn {
+            position: absolute;
+            right: 32px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(255,255,255,0.12);
+            color: rgba(255,255,255,0.6);
+            font-size: 13px;
+            line-height: 1;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            padding: 0;
+            z-index: 2;
+        }
+
+        .select-clear-btn:hover {
+            background: rgba(248,113,113,0.2);
+            color: #f87171;
+        }
+
+        .select-clearable.has-value .select-clear-btn {
+            display: flex;
+        }
+
         /* ===== RESPONSIVE ===== */
         @media (max-width: 768px) {
             .sidebar {
@@ -1163,14 +1210,17 @@
                     <div class="form-group">
                         <label class="form-label" for="item_id">Barang</label>
                         <div style="display:flex; gap:10px;">
-                            <select class="form-control" name="item_id" id="item_id" required>
-                                <option value="">-- Pilih Barang --</option>
-                                @foreach($items as $item)
-                                    <option value="{{ $item->id }}" {{ old('item_id') == $item->id ? 'selected' : '' }}>
-                                        {{ $item->nama_barang }} (Stok: {{ $item->jumlah }})
-                                    </option>
-                                @endforeach
-                            </select>
+                            <div class="select-clearable" id="wrap-item_id">
+                                <select class="form-control" name="item_id" id="item_id" required>
+                                    <option value="">-- Pilih Barang --</option>
+                                    @foreach($items as $item)
+                                        <option value="{{ $item->id }}" {{ old('item_id') == $item->id ? 'selected' : '' }}>
+                                            {{ $item->nama_barang }} (Stok: {{ $item->jumlah }})
+                                        </option>
+                                    @endforeach
+                                </select>
+                                <button type="button" class="select-clear-btn" title="Hapus pilihan">&times;</button>
+                            </div>
                             <button type="button" class="btn-export" onclick="openItemModal()" style="padding: 9px 12px; background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.1);">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                             </button>
@@ -1183,14 +1233,17 @@
                     <div class="form-group">
                         <label class="form-label" for="borrower_id">Peminjam</label>
                         <div style="display:flex; gap:10px;">
-                            <select class="form-control" name="borrower_id" id="borrower_id" required>
-                                <option value="">-- Pilih Peminjam --</option>
-                                @foreach($borrowers as $b)
-                                    <option value="{{ $b->id }}" {{ old('borrower_id') == $b->id ? 'selected' : '' }}>
-                                        {{ $b->nama }}
-                                    </option>
-                                @endforeach
-                            </select>
+                            <div class="select-clearable" id="wrap-borrower_id">
+                                <select class="form-control" name="borrower_id" id="borrower_id" required>
+                                    <option value="">-- Pilih Peminjam --</option>
+                                    @foreach($borrowers as $b)
+                                        <option value="{{ $b->id }}" {{ old('borrower_id') == $b->id ? 'selected' : '' }}>
+                                            {{ $b->nama }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                <button type="button" class="select-clear-btn" title="Hapus pilihan">&times;</button>
+                            </div>
                             <button type="button" class="btn-export" onclick="openBorrowerModal()" style="padding: 9px 12px; background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.1);">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                             </button>
@@ -1327,24 +1380,30 @@
 
                     <div class="form-group">
                         <label class="form-label" for="edit_out_item_id">Barang</label>
-                        <select class="form-control" name="item_id" id="edit_out_item_id" required>
-                            <option value="">-- Pilih Barang --</option>
-                            @foreach(\App\Models\Item::orderBy('nama_barang')->get() as $item)
-                                <option value="{{ $item->id }}">
-                                    {{ $item->nama_barang }} (Stok: {{ $item->jumlah }})
-                                </option>
-                            @endforeach
-                        </select>
+                        <div class="select-clearable" id="wrap-edit_out_item_id">
+                            <select class="form-control" name="item_id" id="edit_out_item_id" required>
+                                <option value="">-- Pilih Barang --</option>
+                                @foreach(\App\Models\Item::orderBy('nama_barang')->get() as $item)
+                                    <option value="{{ $item->id }}">
+                                        {{ $item->nama_barang }} (Stok: {{ $item->jumlah }})
+                                    </option>
+                                @endforeach
+                            </select>
+                            <button type="button" class="select-clear-btn" title="Hapus pilihan">&times;</button>
+                        </div>
                     </div>
 
                     <div class="form-group">
                         <label class="form-label" for="edit_out_borrower_id">Peminjam</label>
-                        <select class="form-control" name="borrower_id" id="edit_out_borrower_id" required>
-                            <option value="">-- Pilih Peminjam --</option>
-                            @foreach($borrowers as $b)
-                                <option value="{{ $b->id }}">{{ $b->nama }}</option>
-                            @endforeach
-                        </select>
+                        <div class="select-clearable" id="wrap-edit_out_borrower_id">
+                            <select class="form-control" name="borrower_id" id="edit_out_borrower_id" required>
+                                <option value="">-- Pilih Peminjam --</option>
+                                @foreach($borrowers as $b)
+                                    <option value="{{ $b->id }}">{{ $b->nama }}</option>
+                                @endforeach
+                            </select>
+                            <button type="button" class="select-clear-btn" title="Hapus pilihan">&times;</button>
+                        </div>
                     </div>
 
                     <div class="form-row">
@@ -1408,6 +1467,42 @@
     </div>
 
     <script>
+        // ===== SELECT CLEAR BUTTONS =====
+        function initSelectClearable(selectId) {
+            const wrapper = document.getElementById('wrap-' + selectId);
+            if (!wrapper) return;
+            const select = wrapper.querySelector('select');
+            const clearBtn = wrapper.querySelector('.select-clear-btn');
+            if (!select || !clearBtn) return;
+
+            function updateState() {
+                if (select.value) {
+                    wrapper.classList.add('has-value');
+                } else {
+                    wrapper.classList.remove('has-value');
+                }
+            }
+
+            select.addEventListener('change', updateState);
+
+            clearBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                select.value = '';
+                wrapper.classList.remove('has-value');
+                select.dispatchEvent(new Event('change'));
+            });
+
+            // Initial state
+            updateState();
+        }
+
+        // Init all clearable selects
+        initSelectClearable('item_id');
+        initSelectClearable('borrower_id');
+        initSelectClearable('edit_out_item_id');
+        initSelectClearable('edit_out_borrower_id');
+
         // ===== MODAL =====
         function openModal() {
             const overlay = document.getElementById('modal-overlay');
@@ -1506,6 +1601,7 @@
                     const select = document.getElementById('item_id');
                     const option = new Option(`${result.data.nama_barang} (Stok: ${result.data.jumlah})`, result.data.id, true, true);
                     select.add(option);
+                    select.dispatchEvent(new Event('change'));
                     closeItemModal();
                     document.getElementById('form-add-item').reset();
                 } else {
@@ -1538,6 +1634,7 @@
                     const select = document.getElementById('borrower_id');
                     const option = new Option(result.data.nama, result.data.id, true, true);
                     select.add(option);
+                    select.dispatchEvent(new Event('change'));
                     closeBorrowerModal();
                     document.getElementById('form-add-borrower').reset();
                 } else {
@@ -1588,7 +1685,9 @@
 
             // Fill fields
             document.getElementById('edit_out_item_id').value = outgoing.item_id;
+            document.getElementById('edit_out_item_id').dispatchEvent(new Event('change'));
             document.getElementById('edit_out_borrower_id').value = outgoing.borrower_id;
+            document.getElementById('edit_out_borrower_id').dispatchEvent(new Event('change'));
             document.getElementById('edit_out_jumlah').value = outgoing.jumlah_keluar;
             document.getElementById('edit_out_tanggal').value = outgoing.tanggal_keluar ? outgoing.tanggal_keluar.split('T')[0] : '';
             document.getElementById('edit_out_keperluan').value = outgoing.keperluan || '';

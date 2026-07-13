@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Daftar Barang - Inventaris Kemhan Pusdatin</title>
+    <meta name="description" content="Halaman Daftar Barang Sistem Inventaris Kementerian Pertahanan Pusat Data dan Informasi">
+    <link rel="icon" href="{{ asset('images/kemenhan-logo.png') }}">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
