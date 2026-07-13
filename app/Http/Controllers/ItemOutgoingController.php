@@ -71,6 +71,7 @@ class ItemOutgoingController extends Controller
             'borrower_id' => 'required|exists:borrowers,id',
             'jumlah_keluar' => 'required|integer|min:1',
             'tanggal_keluar' => 'required|date',
+            'tanggal_kembali' => 'nullable|date|after_or_equal:tanggal_keluar',
             'keperluan' => 'nullable|string|max:255',
             'keterangan' => 'nullable|string',
         ]);
@@ -92,6 +93,7 @@ class ItemOutgoingController extends Controller
                 'recorded_by' => auth()->id(),
                 'jumlah_keluar' => $request->jumlah_keluar,
                 'tanggal_keluar' => $request->tanggal_keluar,
+                'tanggal_kembali' => $request->tanggal_kembali,
                 'keperluan' => $request->keperluan,
                 'keterangan' => $request->keterangan,
                 'status' => 'pending',
@@ -112,6 +114,7 @@ class ItemOutgoingController extends Controller
             'borrower_id' => 'required|exists:borrowers,id',
             'jumlah_keluar' => 'required|integer|min:1',
             'tanggal_keluar' => 'required|date',
+            'tanggal_kembali' => 'nullable|date|after_or_equal:tanggal_keluar',
             'keperluan' => 'nullable|string|max:255',
             'keterangan' => 'nullable|string',
         ]);
@@ -152,6 +155,7 @@ class ItemOutgoingController extends Controller
                 'borrower_id' => $request->borrower_id,
                 'jumlah_keluar' => $newJumlah,
                 'tanggal_keluar' => $request->tanggal_keluar,
+                'tanggal_kembali' => $request->tanggal_kembali,
                 'keperluan' => $request->keperluan,
                 'keterangan' => $request->keterangan,
             ]);
@@ -195,11 +199,20 @@ class ItemOutgoingController extends Controller
                     'deskripsi' => 'Pembatalan barang keluar: ' . $itemOutgoing->jumlah_keluar . ' unit dikembalikan ke stok',
                 ]);
             }
+            // Log history
+            ItemHistory::create([
+                'item_id' => $itemOutgoing->item_id,
+                'user_id' => auth()->id(),
+                'action' => 'selesai',
+                'jumlah_sebelum' => $jumlahSebelum,
+                'jumlah_sesudah' => $jumlahSebelum + $itemOutgoing->jumlah_keluar,
+                'deskripsi' => 'Peminjaman selesai: ' . $itemOutgoing->jumlah_keluar . ' unit barang telah dikembalikan ke stok.',
+            ]);
 
             $itemOutgoing->delete();
         });
 
         return redirect()->route('item-outgoing.index')
-            ->with('success', 'Data barang keluar berhasil dihapus dan stok dikembalikan.');
+            ->with('success', 'Transaksi berhasil diselesaikan. Stok barang telah dikembalikan.');
     }
 }

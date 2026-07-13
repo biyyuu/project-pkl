@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Barang Keluar - Kemenhan Pusdatin</title>
     <meta name="description" content="Halaman Barang Keluar Sistem Inventaris Kementerian Pertahanan Pusat Data dan Informasi">
+    <link rel="icon" href="{{ asset('images/kemenhan-logo.png') }}">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -766,6 +767,33 @@
             height: 14px;
         }
 
+        /* ===== SELESAI BUTTON ===== */
+        .btn-selesai {
+            background: none;
+            border: none;
+            color: #34d399;
+            cursor: pointer;
+            padding: 5px 10px;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-family: 'Inter', sans-serif;
+            font-size: 11px;
+            font-weight: 600;
+            border: 1px solid rgba(52, 211, 153, 0.25);
+        }
+
+        .btn-selesai:hover {
+            background: rgba(52, 211, 153, 0.08);
+        }
+
+        .btn-selesai svg {
+            width: 13px;
+            height: 13px;
+        }
+
         /* ===== SCROLL AREA ===== */
         .scroll-area {
             scrollbar-width: thin;
@@ -797,6 +825,52 @@
         .modal::-webkit-scrollbar-thumb {
             background: rgba(255,255,255,0.1);
             border-radius: 2px;
+        }
+
+        /* ===== SELECT CLEARABLE ===== */
+        .select-clearable {
+            position: relative;
+            flex: 1;
+        }
+
+        .select-clearable select.form-control {
+            width: 100%;
+            padding-right: 36px;
+        }
+
+        .select-clearable.has-value select.form-control {
+            padding-right: 56px;
+        }
+
+        .select-clear-btn {
+            position: absolute;
+            right: 32px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(255,255,255,0.12);
+            color: rgba(255,255,255,0.6);
+            font-size: 13px;
+            line-height: 1;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            padding: 0;
+            z-index: 2;
+        }
+
+        .select-clear-btn:hover {
+            background: rgba(248,113,113,0.2);
+            color: #f87171;
+        }
+
+        .select-clearable.has-value .select-clear-btn {
+            display: flex;
         }
 
         /* ===== RESPONSIVE ===== */
@@ -849,7 +923,26 @@
             <!-- Header -->
             <div class="header">
                 <div class="header-left">
-                    <h1>Halo, {{ $user->name }}!</h1>
+                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 4px;">
+                        <h1 style="margin-bottom: 0;">Halo, {{ $user->name }}!</h1>
+                        @php
+                            $roleLabels = [
+                                'admin' => 'Admin',
+                                'kasub' => 'Kasub',
+                                'kabid' => 'Kabid',
+                            ];
+                            $roleColors = [
+                                'admin' => 'background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #f87171;',
+                                'kasub' => 'background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); color: #34d399;',
+                                'kabid' => 'background: rgba(251, 191, 36, 0.15); border: 1px solid rgba(251, 191, 36, 0.3); color: #fbbf24;',
+                            ];
+                            $label = $roleLabels[$user->role] ?? ucfirst($user->role);
+                            $style = $roleColors[$user->role] ?? 'background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: #ffffff;';
+                        @endphp
+                        <span style="font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px; {{ $style }}">
+                            {{ $label }}
+                        </span>
+                    </div>
                     <p>Siap memonitoring inventaris?</p>
                 </div>
                 <div class="header-right">
@@ -909,6 +1002,7 @@
                         <div class="content-card-subtitle">Pantau barang yang dipinjam setiap divisi.</div>
                     </div>
                     @unlessrole('kabid')
+                    @if(auth()->user()->role !== 'kabid')
                     <button class="btn-pinjam" id="btn-pinjam-open" onclick="openModal()">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <line x1="12" y1="5" x2="12" y2="19"/>
@@ -917,6 +1011,7 @@
                         Pinjam Barang
                     </button>
                     @endunlessrole
+                    @endif
                 </div>
 
                 <!-- Toolbar -->
@@ -960,10 +1055,14 @@
                                     <th>Jumlah</th>
                                     <th>Tanggal Keluar</th>
                                     <th>Status</th>
+                                    <th>Tanggal Pinjam</th>
+                                    <th>Tanggal Pengembalian</th>
                                     <th>Keperluan</th>
                                     <th>Keterangan</th>
                                     <th>Dicatat Oleh</th>
+                                    @if(auth()->user()->role !== 'kabid')
                                     <th></th>
+                                    @endif
                                 </tr>
                             </thead>
                             <tbody>
@@ -985,9 +1084,11 @@
                                             {{ $outgoing->status }}
                                         </span>
                                     </td>
+                                    <td>{{ $outgoing->tanggal_kembali ? $outgoing->tanggal_kembali->translatedFormat('d M Y') : '-' }}</td>
                                     <td>{{ $outgoing->keperluan ?? '-' }}</td>
                                     <td style="max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ $outgoing->keterangan ?? '-' }}</td>
                                     <td style="font-size: 12px; color: rgba(255,255,255,0.4);">{{ $outgoing->recorder->name ?? '-' }}</td>
+                                    @if(auth()->user()->role !== 'kabid')
                                     <td>
                                         @unlessrole('kabid')
                                         <div style="display:flex; gap:6px; align-items:center;">
@@ -1007,9 +1108,16 @@
                                                     </svg>
                                                 </button>
                                             </form>
+                                             <button type="button" class="btn-selesai" title="Selesaikan transaksi & kembalikan stok" onclick="confirmSelesai('{{ route('item-outgoing.destroy', $outgoing) }}')">
+                                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                                     <polyline points="20 6 9 17 4 12"/>
+                                                 </svg>
+                                                 Selesai
+                                             </button>
                                         </div>
                                         @endunlessrole
                                     </td>
+                                    @endif
                                 </tr>
                                 @endforeach
                             </tbody>
@@ -1080,14 +1188,17 @@
                     <div class="form-group">
                         <label class="form-label" for="item_id">Barang</label>
                         <div style="display:flex; gap:10px;">
-                            <select class="form-control" name="item_id" id="item_id" required>
-                                <option value="">-- Pilih Barang --</option>
-                                @foreach($items as $item)
-                                    <option value="{{ $item->id }}" {{ old('item_id') == $item->id ? 'selected' : '' }}>
-                                        {{ $item->nama_barang }} (Stok: {{ $item->jumlah }})
-                                    </option>
-                                @endforeach
-                            </select>
+                            <div class="select-clearable" id="wrap-item_id">
+                                <select class="form-control" name="item_id" id="item_id" required>
+                                    <option value="">-- Pilih Barang --</option>
+                                    @foreach($items as $item)
+                                        <option value="{{ $item->id }}" {{ old('item_id') == $item->id ? 'selected' : '' }}>
+                                            {{ $item->nama_barang }} (Stok: {{ $item->jumlah }})
+                                        </option>
+                                    @endforeach
+                                </select>
+                                <button type="button" class="select-clear-btn" title="Hapus pilihan">&times;</button>
+                            </div>
                             <button type="button" class="btn-export" onclick="openItemModal()" style="padding: 9px 12px; background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.1);">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                             </button>
@@ -1100,14 +1211,17 @@
                     <div class="form-group">
                         <label class="form-label" for="borrower_id">Peminjam</label>
                         <div style="display:flex; gap:10px;">
-                            <select class="form-control" name="borrower_id" id="borrower_id" required>
-                                <option value="">-- Pilih Peminjam --</option>
-                                @foreach($borrowers as $b)
-                                    <option value="{{ $b->id }}" {{ old('borrower_id') == $b->id ? 'selected' : '' }}>
-                                        {{ $b->nama }}
-                                    </option>
-                                @endforeach
-                            </select>
+                            <div class="select-clearable" id="wrap-borrower_id">
+                                <select class="form-control" name="borrower_id" id="borrower_id" required>
+                                    <option value="">-- Pilih Peminjam --</option>
+                                    @foreach($borrowers as $b)
+                                        <option value="{{ $b->id }}" {{ old('borrower_id') == $b->id ? 'selected' : '' }}>
+                                            {{ $b->nama }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                <button type="button" class="select-clear-btn" title="Hapus pilihan">&times;</button>
+                            </div>
                             <button type="button" class="btn-export" onclick="openBorrowerModal()" style="padding: 9px 12px; background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.1);">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                             </button>
@@ -1125,10 +1239,20 @@
                                 <div class="form-error">{{ $message }}</div>
                             @enderror
                         </div>
+                    </div>
+
+                    <div class="form-row">
                         <div class="form-group">
-                            <label class="form-label" for="tanggal_keluar">Tanggal Keluar</label>
+                            <label class="form-label" for="tanggal_keluar">Tanggal Pinjam</label>
                             <input type="date" class="form-control" name="tanggal_keluar" id="tanggal_keluar" value="{{ old('tanggal_keluar', now()->format('Y-m-d')) }}" required>
                             @error('tanggal_keluar')
+                                <div class="form-error">{{ $message }}</div>
+                            @enderror
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="tanggal_kembali">Tanggal Pengembalian</label>
+                            <input type="date" class="form-control" name="tanggal_kembali" id="tanggal_kembali" value="{{ old('tanggal_kembali') }}">
+                            @error('tanggal_kembali')
                                 <div class="form-error">{{ $message }}</div>
                             @enderror
                         </div>
@@ -1244,24 +1368,30 @@
 
                     <div class="form-group">
                         <label class="form-label" for="edit_out_item_id">Barang</label>
-                        <select class="form-control" name="item_id" id="edit_out_item_id" required>
-                            <option value="">-- Pilih Barang --</option>
-                            @foreach(\App\Models\Item::orderBy('nama_barang')->get() as $item)
-                                <option value="{{ $item->id }}">
-                                    {{ $item->nama_barang }} (Stok: {{ $item->jumlah }})
-                                </option>
-                            @endforeach
-                        </select>
+                        <div class="select-clearable" id="wrap-edit_out_item_id">
+                            <select class="form-control" name="item_id" id="edit_out_item_id" required>
+                                <option value="">-- Pilih Barang --</option>
+                                @foreach(\App\Models\Item::orderBy('nama_barang')->get() as $item)
+                                    <option value="{{ $item->id }}">
+                                        {{ $item->nama_barang }} (Stok: {{ $item->jumlah }})
+                                    </option>
+                                @endforeach
+                            </select>
+                            <button type="button" class="select-clear-btn" title="Hapus pilihan">&times;</button>
+                        </div>
                     </div>
 
                     <div class="form-group">
                         <label class="form-label" for="edit_out_borrower_id">Peminjam</label>
-                        <select class="form-control" name="borrower_id" id="edit_out_borrower_id" required>
-                            <option value="">-- Pilih Peminjam --</option>
-                            @foreach($borrowers as $b)
-                                <option value="{{ $b->id }}">{{ $b->nama }}</option>
-                            @endforeach
-                        </select>
+                        <div class="select-clearable" id="wrap-edit_out_borrower_id">
+                            <select class="form-control" name="borrower_id" id="edit_out_borrower_id" required>
+                                <option value="">-- Pilih Peminjam --</option>
+                                @foreach($borrowers as $b)
+                                    <option value="{{ $b->id }}">{{ $b->nama }}</option>
+                                @endforeach
+                            </select>
+                            <button type="button" class="select-clear-btn" title="Hapus pilihan">&times;</button>
+                        </div>
                     </div>
 
                     <div class="form-row">
@@ -1269,9 +1399,16 @@
                             <label class="form-label" for="edit_out_jumlah">Jumlah</label>
                             <input type="number" class="form-control" name="jumlah_keluar" id="edit_out_jumlah" min="1" required>
                         </div>
+                    </div>
+
+                    <div class="form-row">
                         <div class="form-group">
-                            <label class="form-label" for="edit_out_tanggal">Tanggal Keluar</label>
+                            <label class="form-label" for="edit_out_tanggal">Tanggal Pinjam</label>
                             <input type="date" class="form-control" name="tanggal_keluar" id="edit_out_tanggal" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="edit_out_tanggal_kembali">Tanggal Pengembalian</label>
+                            <input type="date" class="form-control" name="tanggal_kembali" id="edit_out_tanggal_kembali">
                         </div>
                     </div>
 
@@ -1293,7 +1430,74 @@
         </div>
     </div>
 
+    <!-- ===== MODAL: Konfirmasi Selesai ===== -->
+    <div class="modal-overlay" id="modal-overlay-selesai">
+        <div class="modal" style="width: 420px; text-align: center;">
+            <div class="modal-body" style="padding: 32px 24px;">
+                <div style="width: 64px; height: 64px; border-radius: 50%; background: rgba(52, 211, 153, 0.1); border: 1px solid rgba(52, 211, 153, 0.2); color: #34d399; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px auto;">
+                    <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                </div>
+                <h3 style="font-size: 18px; font-weight: 700; color: #ffffff; margin-bottom: 8px;">Selesaikan Transaksi?</h3>
+                <p style="font-size: 13px; color: rgba(255,255,255,0.6); line-height: 1.5; margin-bottom: 24px;">
+                    Menandai transaksi ini selesai akan mengembalikan stok barang ke daftar barang dan mencatatnya ke riwayat aktivitas.
+                </p>
+                
+                <form id="form-selesai-transaksi" method="POST" style="display: none;">
+                    @csrf
+                    @method('DELETE')
+                </form>
+                
+                <div style="display: flex; gap: 12px; justify-content: center;">
+                    <button type="button" onclick="closeSelesaiModal()" style="flex: 1; padding: 11px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.04); color: #ffffff; font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s ease;">
+                        Batal
+                    </button>
+                    <button type="button" onclick="submitSelesaiForm()" style="flex: 1; padding: 11px; border-radius: 8px; border: none; background: #10b981; color: #ffffff; font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s ease;">
+                        Ya, Selesai
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
+        // ===== SELECT CLEAR BUTTONS =====
+        function initSelectClearable(selectId) {
+            const wrapper = document.getElementById('wrap-' + selectId);
+            if (!wrapper) return;
+            const select = wrapper.querySelector('select');
+            const clearBtn = wrapper.querySelector('.select-clear-btn');
+            if (!select || !clearBtn) return;
+
+            function updateState() {
+                if (select.value) {
+                    wrapper.classList.add('has-value');
+                } else {
+                    wrapper.classList.remove('has-value');
+                }
+            }
+
+            select.addEventListener('change', updateState);
+
+            clearBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                select.value = '';
+                wrapper.classList.remove('has-value');
+                select.dispatchEvent(new Event('change'));
+            });
+
+            // Initial state
+            updateState();
+        }
+
+        // Init all clearable selects
+        initSelectClearable('item_id');
+        initSelectClearable('borrower_id');
+        initSelectClearable('edit_out_item_id');
+        initSelectClearable('edit_out_borrower_id');
+
         // ===== MODAL =====
         function openModal() {
             const overlay = document.getElementById('modal-overlay');
@@ -1392,6 +1596,7 @@
                     const select = document.getElementById('item_id');
                     const option = new Option(`${result.data.nama_barang} (Stok: ${result.data.jumlah})`, result.data.id, true, true);
                     select.add(option);
+                    select.dispatchEvent(new Event('change'));
                     closeItemModal();
                     document.getElementById('form-add-item').reset();
                 } else {
@@ -1424,6 +1629,7 @@
                     const select = document.getElementById('borrower_id');
                     const option = new Option(result.data.nama, result.data.id, true, true);
                     select.add(option);
+                    select.dispatchEvent(new Event('change'));
                     closeBorrowerModal();
                     document.getElementById('form-add-borrower').reset();
                 } else {
@@ -1474,9 +1680,12 @@
 
             // Fill fields
             document.getElementById('edit_out_item_id').value = outgoing.item_id;
+            document.getElementById('edit_out_item_id').dispatchEvent(new Event('change'));
             document.getElementById('edit_out_borrower_id').value = outgoing.borrower_id;
+            document.getElementById('edit_out_borrower_id').dispatchEvent(new Event('change'));
             document.getElementById('edit_out_jumlah').value = outgoing.jumlah_keluar;
             document.getElementById('edit_out_tanggal').value = outgoing.tanggal_keluar ? outgoing.tanggal_keluar.split('T')[0] : '';
+            document.getElementById('edit_out_tanggal_kembali').value = outgoing.tanggal_kembali ? outgoing.tanggal_kembali.split('T')[0] : '';
             document.getElementById('edit_out_keperluan').value = outgoing.keperluan || '';
             document.getElementById('edit_out_keterangan').value = outgoing.keterangan || '';
 
@@ -1496,6 +1705,34 @@
 
         document.getElementById('modal-overlay-edit-outgoing').addEventListener('click', function(e) {
             if (e.target === this) closeEditOutgoingModal();
+        });
+
+        // ===== CONFIRM SELESAI MODAL =====
+        function confirmSelesai(actionUrl) {
+            const overlay = document.getElementById('modal-overlay-selesai');
+            const form = document.getElementById('form-selesai-transaksi');
+            form.action = actionUrl;
+            
+            overlay.style.display = 'flex';
+            requestAnimationFrame(() => overlay.classList.add('show'));
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeSelesaiModal() {
+            const overlay = document.getElementById('modal-overlay-selesai');
+            overlay.classList.remove('show');
+            setTimeout(() => {
+                overlay.style.display = 'none';
+            }, 250);
+            document.body.style.overflow = '';
+        }
+
+        function submitSelesaiForm() {
+            document.getElementById('form-selesai-transaksi').submit();
+        }
+
+        document.getElementById('modal-overlay-selesai').addEventListener('click', function(e) {
+            if (e.target === this) closeSelesaiModal();
         });
     </script>
 </body>

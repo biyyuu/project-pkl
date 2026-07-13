@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - Kemenhan Pusdatin</title>
     <meta name="description" content="Dashboard Sistem Inventaris Kementerian Pertahanan Pusat Data dan Informasi">
+    <link rel="icon" href="{{ asset('images/kemenhan-logo.png') }}">
     <link rel="stylesheet" href="{{ asset('css/dashboard.css') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -69,20 +70,30 @@
             <!-- Header -->
             <div class="header">
                 <div class="header-left">
-                    <h1>Halo, {{ $user->name }}!</h1>
+                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 4px;">
+                        <h1 style="margin-bottom: 0;">Halo, {{ $user->name }}!</h1>
+                        @php
+                            $roleLabels = [
+                                'admin' => 'Admin',
+                                'kasub' => 'Kasub',
+                                'kabid' => 'Kabid',
+                            ];
+                            $roleColors = [
+                                'admin' => 'background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #f87171;',
+                                'kasub' => 'background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); color: #34d399;',
+                                'kabid' => 'background: rgba(251, 191, 36, 0.15); border: 1px solid rgba(251, 191, 36, 0.3); color: #fbbf24;',
+                            ];
+                            $label = $roleLabels[$user->role] ?? ucfirst($user->role);
+                            $style = $roleColors[$user->role] ?? 'background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: #ffffff;';
+                        @endphp
+                        <span style="font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px; {{ $style }}">
+                            {{ $label }}
+                        </span>
+                    </div>
                     <p>Siap memonitoring inventaris?</p>
                 </div>
                 <div class="header-right">
                     <div class="header-actions">
-                        <button class="btn-filter" id="btn-filter">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                                <line x1="16" y1="2" x2="16" y2="6"/>
-                                <line x1="8" y1="2" x2="8" y2="6"/>
-                                <line x1="3" y1="10" x2="21" y2="10"/>
-                            </svg>
-                            This Month
-                        </button>
                         <button class="btn-export" id="btn-export" onclick="openExportModal()">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>

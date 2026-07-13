@@ -33,6 +33,12 @@ Route::middleware('auth')->group(function () {
     Route::post('/daftar-barang', [\App\Http\Controllers\ItemController::class, 'store'])->name('items.store')->middleware('role:admin');
     Route::put('/daftar-barang/{item}', [\App\Http\Controllers\ItemController::class, 'update'])->name('items.update')->middleware('role:admin');
     Route::delete('/daftar-barang/{item}', [\App\Http\Controllers\ItemController::class, 'destroy'])->name('items.destroy')->middleware('role:admin');
+
+    Route::middleware('role:admin,kasub')->group(function () {
+        Route::post('/daftar-barang', [\App\Http\Controllers\ItemController::class, 'store'])->name('items.store');
+        Route::put('/daftar-barang/{item}', [\App\Http\Controllers\ItemController::class, 'update'])->name('items.update');
+        Route::delete('/daftar-barang/{item}', [\App\Http\Controllers\ItemController::class, 'destroy'])->name('items.destroy');
+    });
 });
 
 // Barang Keluar
@@ -45,6 +51,19 @@ Route::middleware('auth')->group(function () {
         ->name('item-outgoing.update')->middleware('role:admin');
     Route::delete('/barang-keluar/{itemOutgoing}', [ItemOutgoingController::class, 'destroy'])
         ->name('item-outgoing.destroy')->middleware('role:admin');
+
+    Route::middleware('role:admin,kasub')->group(function () {
+        Route::post('/barang-keluar', [ItemOutgoingController::class, 'store'])
+            ->name('item-outgoing.store');
+        Route::put('/barang-keluar/{itemOutgoing}', [ItemOutgoingController::class, 'update'])
+            ->name('item-outgoing.update');
+        Route::delete('/barang-keluar/{itemOutgoing}', [ItemOutgoingController::class, 'destroy'])
+            ->name('item-outgoing.destroy');
+            
+        // AJAX endpoints
+        Route::post('/ajax/items', [\App\Http\Controllers\ItemController::class, 'storeAjax'])->name('items.storeAjax');
+        Route::post('/ajax/borrowers', [\App\Http\Controllers\BorrowerController::class, 'storeAjax'])->name('borrowers.storeAjax');
+    });
         
     // Approvals
     Route::get('/approval', [\App\Http\Controllers\ApprovalController::class, 'index'])->name('approval.index');
@@ -56,8 +75,4 @@ Route::middleware('auth')->group(function () {
 
     // Reports
     Route::get('/export/laporan', [DashboardController::class, 'exportPdf'])->name('export.pdf');
-
-    // AJAX endpoints
-    Route::post('/ajax/items', [\App\Http\Controllers\ItemController::class, 'storeAjax'])->name('items.storeAjax');
-    Route::post('/ajax/borrowers', [\App\Http\Controllers\BorrowerController::class, 'storeAjax'])->name('borrowers.storeAjax');
 });
