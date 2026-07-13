@@ -11,12 +11,13 @@ class ItemOutgoing extends Model
 
     protected $fillable = [
         'item_id', 'borrower_id', 'recorded_by',
-        'jumlah_keluar', 'tanggal_keluar',
+        'jumlah_keluar', 'tanggal_keluar', 'tanggal_kembali',
         'keperluan', 'keterangan',
     ];
 
     protected $casts = [
         'tanggal_keluar' => 'date',
+        'tanggal_kembali' => 'date',
     ];
 
     public function item()

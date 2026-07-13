@@ -71,6 +71,7 @@ class ItemOutgoingController extends Controller
             'borrower_id' => 'required|exists:borrowers,id',
             'jumlah_keluar' => 'required|integer|min:1',
             'tanggal_keluar' => 'required|date',
+            'tanggal_kembali' => 'nullable|date|after_or_equal:tanggal_keluar',
             'keperluan' => 'nullable|string|max:255',
             'keterangan' => 'nullable|string',
         ]);
@@ -94,6 +95,7 @@ class ItemOutgoingController extends Controller
                 'recorded_by' => auth()->id(),
                 'jumlah_keluar' => $request->jumlah_keluar,
                 'tanggal_keluar' => $request->tanggal_keluar,
+                'tanggal_kembali' => $request->tanggal_kembali,
                 'keperluan' => $request->keperluan,
                 'keterangan' => $request->keterangan,
             ]);
@@ -126,6 +128,7 @@ class ItemOutgoingController extends Controller
             'borrower_id' => 'required|exists:borrowers,id',
             'jumlah_keluar' => 'required|integer|min:1',
             'tanggal_keluar' => 'required|date',
+            'tanggal_kembali' => 'nullable|date|after_or_equal:tanggal_keluar',
             'keperluan' => 'nullable|string|max:255',
             'keterangan' => 'nullable|string',
         ]);
@@ -164,6 +167,7 @@ class ItemOutgoingController extends Controller
                 'borrower_id' => $request->borrower_id,
                 'jumlah_keluar' => $newJumlah,
                 'tanggal_keluar' => $request->tanggal_keluar,
+                'tanggal_kembali' => $request->tanggal_kembali,
                 'keperluan' => $request->keperluan,
                 'keterangan' => $request->keterangan,
             ]);

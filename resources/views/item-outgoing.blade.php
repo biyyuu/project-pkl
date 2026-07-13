@@ -1099,7 +1099,8 @@
                                     <th>No. Seri</th>
                                     <th>Peminjam</th>
                                     <th>Jumlah</th>
-                                    <th>Tanggal Keluar</th>
+                                    <th>Tanggal Pinjam</th>
+                                    <th>Tanggal Pengembalian</th>
                                     <th>Keperluan</th>
                                     <th>Keterangan</th>
                                     <th>Dicatat Oleh</th>
@@ -1119,6 +1120,7 @@
                                     <td>{{ $outgoing->borrower->nama ?? '-' }}</td>
                                     <td>{{ $outgoing->jumlah_keluar }}</td>
                                     <td>{{ $outgoing->tanggal_keluar->translatedFormat('d M Y') }}</td>
+                                    <td>{{ $outgoing->tanggal_kembali ? $outgoing->tanggal_kembali->translatedFormat('d M Y') : '-' }}</td>
                                     <td>{{ $outgoing->keperluan ?? '-' }}</td>
                                     <td style="max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ $outgoing->keterangan ?? '-' }}</td>
                                     <td style="font-size: 12px; color: rgba(255,255,255,0.4);">{{ $outgoing->recorder->name ?? '-' }}</td>
@@ -1261,10 +1263,20 @@
                                 <div class="form-error">{{ $message }}</div>
                             @enderror
                         </div>
+                    </div>
+
+                    <div class="form-row">
                         <div class="form-group">
-                            <label class="form-label" for="tanggal_keluar">Tanggal Keluar</label>
+                            <label class="form-label" for="tanggal_keluar">Tanggal Pinjam</label>
                             <input type="date" class="form-control" name="tanggal_keluar" id="tanggal_keluar" value="{{ old('tanggal_keluar', now()->format('Y-m-d')) }}" required>
                             @error('tanggal_keluar')
+                                <div class="form-error">{{ $message }}</div>
+                            @enderror
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="tanggal_kembali">Tanggal Pengembalian</label>
+                            <input type="date" class="form-control" name="tanggal_kembali" id="tanggal_kembali" value="{{ old('tanggal_kembali') }}">
+                            @error('tanggal_kembali')
                                 <div class="form-error">{{ $message }}</div>
                             @enderror
                         </div>
@@ -1411,9 +1423,16 @@
                             <label class="form-label" for="edit_out_jumlah">Jumlah</label>
                             <input type="number" class="form-control" name="jumlah_keluar" id="edit_out_jumlah" min="1" required>
                         </div>
+                    </div>
+
+                    <div class="form-row">
                         <div class="form-group">
-                            <label class="form-label" for="edit_out_tanggal">Tanggal Keluar</label>
+                            <label class="form-label" for="edit_out_tanggal">Tanggal Pinjam</label>
                             <input type="date" class="form-control" name="tanggal_keluar" id="edit_out_tanggal" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="edit_out_tanggal_kembali">Tanggal Pengembalian</label>
+                            <input type="date" class="form-control" name="tanggal_kembali" id="edit_out_tanggal_kembali">
                         </div>
                     </div>
 
@@ -1690,6 +1709,7 @@
             document.getElementById('edit_out_borrower_id').dispatchEvent(new Event('change'));
             document.getElementById('edit_out_jumlah').value = outgoing.jumlah_keluar;
             document.getElementById('edit_out_tanggal').value = outgoing.tanggal_keluar ? outgoing.tanggal_keluar.split('T')[0] : '';
+            document.getElementById('edit_out_tanggal_kembali').value = outgoing.tanggal_kembali ? outgoing.tanggal_kembali.split('T')[0] : '';
             document.getElementById('edit_out_keperluan').value = outgoing.keperluan || '';
             document.getElementById('edit_out_keterangan').value = outgoing.keterangan || '';
 
