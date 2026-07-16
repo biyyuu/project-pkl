@@ -936,8 +936,8 @@
                                 'kasub' => 'background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); color: #34d399;',
                                 'kabid' => 'background: rgba(251, 191, 36, 0.15); border: 1px solid rgba(251, 191, 36, 0.3); color: #fbbf24;',
                             ];
-                            $label = $roleLabels[$user->role] ?? ucfirst($user->role);
-                            $style = $roleColors[$user->role] ?? 'background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: #ffffff;';
+                            $label = $roleLabels[$user->getRoleNames()->first() ?? 'unknown'] ?? ucfirst($user->getRoleNames()->first() ?? 'unknown');
+                            $style = $roleColors[$user->getRoleNames()->first() ?? 'unknown'] ?? 'background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: #ffffff;';
                         @endphp
                         <span style="font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px; {{ $style }}">
                             {{ $label }}
@@ -1001,8 +1001,7 @@
                         <div class="content-card-title">Barang Keluar</div>
                         <div class="content-card-subtitle">Pantau barang yang dipinjam setiap divisi.</div>
                     </div>
-                    @unlessrole('kabid')
-                    @if(auth()->user()->role !== 'kabid')
+                    @can('create-outgoings')
                     <button class="btn-pinjam" id="btn-pinjam-open" onclick="openModal()">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <line x1="12" y1="5" x2="12" y2="19"/>
@@ -1010,8 +1009,7 @@
                         </svg>
                         Pinjam Barang
                     </button>
-                    @endunlessrole
-                    @endif
+                    @endcan
                 </div>
 
                 <!-- Toolbar -->
@@ -1060,9 +1058,9 @@
                                     <th>Keperluan</th>
                                     <th>Keterangan</th>
                                     <th>Dicatat Oleh</th>
-                                    @if(auth()->user()->role !== 'kabid')
+                                    @can('update-outgoings')
                                     <th></th>
-                                    @endif
+                                    @endcan
                                 </tr>
                             </thead>
                             <tbody>
@@ -1088,9 +1086,8 @@
                                     <td>{{ $outgoing->keperluan ?? '-' }}</td>
                                     <td style="max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ $outgoing->keterangan ?? '-' }}</td>
                                     <td style="font-size: 12px; color: rgba(255,255,255,0.4);">{{ $outgoing->recorder->name ?? '-' }}</td>
-                                    @if(auth()->user()->role !== 'kabid')
+                                    @can('update-outgoings')
                                     <td>
-                                        @unlessrole('kabid')
                                         <div style="display:flex; gap:6px; align-items:center;">
                                             <button type="button" class="btn-delete" title="Edit" style="color: #fbbf24;" onclick='openEditOutgoingModal(@json($outgoing))'>
                                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1115,9 +1112,8 @@
                                                  Selesai
                                              </button>
                                         </div>
-                                        @endunlessrole
                                     </td>
-                                    @endif
+                                    @endcan
                                 </tr>
                                 @endforeach
                             </tbody>

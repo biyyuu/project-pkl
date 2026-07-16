@@ -89,7 +89,7 @@
                                 'kasub' => 'background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); color: #34d399;',
                                 'kabid' => 'background: rgba(251, 191, 36, 0.15); border: 1px solid rgba(251, 191, 36, 0.3); color: #fbbf24;',
                             ];
-                            $roleName = auth()->user()->role;
+                            $roleName = auth()->user()->getRoleNames()->first() ?? 'unknown';
                             $label = $roleLabels[$roleName] ?? ucfirst($roleName);
                             $style = $roleColors[$roleName] ?? 'background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: #ffffff;';
                         @endphp
@@ -99,8 +99,7 @@
                     </div>
                     <p>Siap memonitoring inventaris?</p>
                 </div>
-                @unlessrole('kabid')
-                @if(auth()->user()->role !== 'kabid')
+                @can('create-items')
                 <button class="btn-export" id="btn-tambah-barang">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <line x1="12" y1="5" x2="12" y2="19"/>
@@ -108,8 +107,7 @@
                     </svg>
                     Tambah Barang
                 </button>
-                @endunlessrole
-                @endif
+                @endcan
             </div>
 
             <!-- Flash Success Message -->
@@ -175,9 +173,9 @@
                                     <th>Tahun</th>
                                     <th>Kondisi</th>
                                     <th>Keterangan</th>
-                                    @if(auth()->user()->role !== 'kabid')
+                                    @can('update-items')
                                     <th></th>
-                                    @endif
+                                    @endcan
                                 </tr>
                             </thead>
                             <tbody>
@@ -198,9 +196,8 @@
                                     <td style="font-size: 12px; color: rgba(255,255,255,0.5); max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="{{ $item->keterangan }}">
                                         {{ $item->keterangan ?? '-' }}
                                     </td>
-                                    @if(auth()->user()->role !== 'kabid')
+                                    @can('update-items')
                                     <td>
-                                        @unlessrole('kabid')
                                         <div class="btn-action-group">
                                             <button type="button" class="btn-edit" title="Edit Barang" onclick="openEditModal({{ json_encode($item) }})">
                                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -219,9 +216,8 @@
                                                 </button>
                                             </form>
                                         </div>
-                                        @endunlessrole
                                     </td>
-                                    @endif
+                                    @endcan
                                 </tr>
                                 @endforeach
                             </tbody>

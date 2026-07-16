@@ -17,7 +17,6 @@ class AuthController extends Controller
         $request->validate([
             'username' => 'required|string',
             'password' => 'required|string',
-            'role'     => 'required|in:admin,kasub,kabid',
         ]);
 
         $credentials = [
@@ -26,24 +25,13 @@ class AuthController extends Controller
         ];
 
         if (Auth::attempt($credentials, false)) {
-            // Verify that the authenticated user has the selected role
-            if (Auth::user()->role !== $request->role) {
-                Auth::logout();
-                $request->session()->invalidate();
-                $request->session()->regenerateToken();
-
-                return back()->withErrors([
-                    'role' => 'Role yang dipilih tidak sesuai dengan akun Anda.',
-                ])->onlyInput('username', 'role');
-            }
-
             $request->session()->regenerate();
             return redirect()->intended('/dashboard');
         }
 
         return back()->withErrors([
             'username' => 'Username atau password salah.',
-        ])->onlyInput('username', 'role');
+        ])->onlyInput('username');
     }
 
     public function logout(Request $request)

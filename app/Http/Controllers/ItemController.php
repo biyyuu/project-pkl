@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Item;
+use App\Models\ItemHistory;
 use Illuminate\Http\Request;
 
 class ItemController extends Controller
@@ -36,7 +37,16 @@ class ItemController extends Controller
         $validated['user_id'] = auth()->id();
         $validated['created_by'] = auth()->id();
 
-        Item::create($validated);
+        $item = Item::create($validated);
+
+        ItemHistory::create([
+            'item_id' => $item->id,
+            'user_id' => auth()->id(),
+            'action' => 'tambah',
+            'jumlah_sebelum' => 0,
+            'jumlah_sesudah' => $item->jumlah,
+            'deskripsi' => 'Menambahkan barang baru ke sistem.',
+        ]);
 
         return redirect()->route('item')->with('success', 'Barang berhasil ditambahkan!');
     }
@@ -58,7 +68,17 @@ class ItemController extends Controller
             'keterangan' => 'nullable|string',
         ]);
 
+        $jumlahSebelum = $item->jumlah;
         $item->update($validated);
+
+        ItemHistory::create([
+            'item_id' => $item->id,
+            'user_id' => auth()->id(),
+            'action' => 'edit',
+            'jumlah_sebelum' => $jumlahSebelum,
+            'jumlah_sesudah' => $item->jumlah,
+            'deskripsi' => 'Mengubah data barang / stok.',
+        ]);
 
         return redirect()->route('item')->with('success', 'Data barang berhasil diperbarui!');
     }
@@ -74,7 +94,17 @@ class ItemController extends Controller
                 ->with('error', 'Barang tidak bisa dihapus karena masih memiliki data barang keluar terkait.');
         }
 
+        $jumlahSebelum = $item->jumlah;
         $item->delete();
+
+        ItemHistory::create([
+            'item_id' => $item->id,
+            'user_id' => auth()->id(),
+            'action' => 'hapus',
+            'jumlah_sebelum' => $jumlahSebelum,
+            'jumlah_sesudah' => 0,
+            'deskripsi' => 'Menghapus barang dari sistem.',
+        ]);
 
         return redirect()->route('item')->with('success', 'Barang berhasil dihapus!');
     }

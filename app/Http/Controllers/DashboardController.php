@@ -18,8 +18,9 @@ class DashboardController extends Controller
         $user = auth()->user();
 
         // --- Total Peminjaman (Barang Keluar) ---
-        $totalPeminjaman = ItemOutgoing::count();
-        $totalPeminjamanBulanIni = ItemOutgoing::whereMonth('tanggal_keluar', now()->month)
+        $totalPeminjaman = ItemOutgoing::where('status', 'approved')->count();
+        $totalPeminjamanBulanIni = ItemOutgoing::where('status', 'approved')
+            ->whereMonth('tanggal_keluar', now()->month)
             ->whereYear('tanggal_keluar', now()->year)
             ->count();
 
@@ -27,8 +28,8 @@ class DashboardController extends Controller
         $totalBarang = Item::count();
         $totalStok = Item::sum('jumlah');
 
-        // --- Total User/Peminjam ---
-        $totalPeminjam = User::count();
+        // --- Total Peminjam (Unique Borrowers) ---
+        $totalPeminjam = \App\Models\ItemOutgoing::where('status', 'approved')->distinct('borrower_id')->count('borrower_id');
 
         // --- Barang Kondisi Baik ---
         $barangBaik = Item::where('kondisi_barang', 'baik')->count();
@@ -42,7 +43,8 @@ class DashboardController extends Controller
             for ($i = 6; $i >= 0; $i--) {
                 $date = now()->subDays($i);
                 $demandLabels[] = $date->translatedFormat('d M');
-                $demandData[] = ItemOutgoing::whereDate('tanggal_keluar', $date->format('Y-m-d'))
+                $demandData[] = ItemOutgoing::where('status', 'approved')
+                    ->whereDate('tanggal_keluar', $date->format('Y-m-d'))
                     ->sum('jumlah_keluar');
             }
         } elseif ($chartPeriod === 'mingguan') {
@@ -50,14 +52,16 @@ class DashboardController extends Controller
                 $start = now()->subWeeks($i)->startOfWeek();
                 $end = now()->subWeeks($i)->endOfWeek();
                 $demandLabels[] = $start->translatedFormat('d M') . ' - ' . $end->translatedFormat('d M');
-                $demandData[] = ItemOutgoing::whereBetween('tanggal_keluar', [$start->format('Y-m-d'), $end->format('Y-m-d')])
+                $demandData[] = ItemOutgoing::where('status', 'approved')
+                    ->whereBetween('tanggal_keluar', [$start->format('Y-m-d'), $end->format('Y-m-d')])
                     ->sum('jumlah_keluar');
             }
         } elseif ($chartPeriod === 'bulanan') {
             for ($i = 11; $i >= 0; $i--) {
                 $date = now()->subMonths($i);
                 $demandLabels[] = $date->translatedFormat('M Y');
-                $demandData[] = ItemOutgoing::whereMonth('tanggal_keluar', $date->month)
+                $demandData[] = ItemOutgoing::where('status', 'approved')
+                    ->whereMonth('tanggal_keluar', $date->month)
                     ->whereYear('tanggal_keluar', $date->year)
                     ->sum('jumlah_keluar');
             }
@@ -66,25 +70,28 @@ class DashboardController extends Controller
             for ($i = 5; $i >= 0; $i--) {
                 $date = now()->subMonths($i);
                 $demandLabels[] = $date->translatedFormat('M Y');
-                $demandData[] = ItemOutgoing::whereMonth('tanggal_keluar', $date->month)
+                $demandData[] = ItemOutgoing::where('status', 'approved')
+                    ->whereMonth('tanggal_keluar', $date->month)
                     ->whereYear('tanggal_keluar', $date->year)
                     ->sum('jumlah_keluar');
             }
         }
 
         // --- Daftar Peminjam (latest outgoings with borrower info) ---
-        $daftarPeminjam = ItemOutgoing::with(['borrower', 'item'])
+        $daftarPeminjam = ItemOutgoing::where('status', 'approved')
+            ->with(['borrower', 'item' => function ($q) { $q->withTrashed(); }])
             ->orderByDesc('tanggal_keluar')
             ->orderByDesc('created_at')
             ->limit(10)
             ->get();
 
         // --- Barang Paling Sering Dipinjam ---
-        $barangSeringDipinjam = ItemOutgoing::select('item_id', DB::raw('SUM(jumlah_keluar) as total_keluar'), DB::raw('COUNT(*) as frekuensi'))
+        $barangSeringDipinjam = ItemOutgoing::where('status', 'approved')
+            ->select('item_id', DB::raw('SUM(jumlah_keluar) as total_keluar'), DB::raw('COUNT(*) as frekuensi'))
             ->groupBy('item_id')
             ->orderByDesc('total_keluar')
             ->limit(5)
-            ->with('item')
+            ->with(['item' => function ($q) { $q->withTrashed(); }])
             ->get();
 
         // --- List Barang Tersedia ---
@@ -95,7 +102,7 @@ class DashboardController extends Controller
             ->get();
 
         // --- History Peminjaman (Recent Activity) ---
-        $historyPeminjaman = ItemHistory::with(['item', 'user'])
+        $historyPeminjaman = ItemHistory::with(['item' => function ($q) { $q->withTrashed(); }, 'user'])
             ->orderByDesc('created_at')
             ->limit(10)
             ->get();
@@ -124,7 +131,8 @@ class DashboardController extends Controller
         $year = $request->query('year', now()->year);
 
         // Fetch data for the selected month & year
-        $outgoings = ItemOutgoing::with(['item', 'borrower', 'recorder'])
+        $outgoings = ItemOutgoing::with(['item' => function ($q) { $q->withTrashed(); }, 'borrower', 'recorder'])
+            ->where('status', 'approved')
             ->whereMonth('tanggal_keluar', $month)
             ->whereYear('tanggal_keluar', $year)
             ->orderBy('tanggal_keluar', 'asc')
@@ -150,7 +158,7 @@ class DashboardController extends Controller
     {
         $user = auth()->user();
         
-        $query = \App\Models\ItemHistory::with(['item', 'user'])->orderByDesc('created_at');
+        $query = \App\Models\ItemHistory::with(['item' => function ($q) { $q->withTrashed(); }, 'user'])->orderByDesc('created_at');
         
         if ($request->filled('search')) {
             $search = $request->search;
@@ -162,5 +170,16 @@ class DashboardController extends Controller
         $histories = $query->paginate(15)->withQueryString();
         
         return view('history', compact('user', 'histories'));
+    }
+
+    public function destroyHistory(ItemHistory $history)
+    {
+        // Only admin can delete history
+        if (!auth()->user()->hasRole('admin')) {
+            return back()->with('error', 'Akses ditolak.');
+        }
+
+        $history->delete();
+        return back()->with('success', 'Catatan riwayat berhasil dihapus.');
     }
 }

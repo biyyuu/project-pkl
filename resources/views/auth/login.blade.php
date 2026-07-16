@@ -333,15 +333,6 @@
                     >
                 </div>
 
-                <div class="form-field select-wrapper">
-                    <select id="role" name="role" required onchange="this.classList.toggle('has-value', this.value !== '')">
-                        <option value="" disabled selected>Select Role</option>
-                        <option value="admin" {{ old('role') == 'admin' ? 'selected' : '' }}>Admin</option>
-                        <option value="kasub" {{ old('role') == 'kasub' ? 'selected' : '' }}>Kasub (Approval)</option>
-                        <option value="kabid" {{ old('role') == 'kabid' ? 'selected' : '' }}>Kabid (View only)</option>
-                    </select>
-                </div>
-
                 <button type="submit" class="submit-btn" id="submit-btn">Submit</button>
             </form>
         </div>

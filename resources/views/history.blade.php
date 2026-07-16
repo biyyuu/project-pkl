@@ -22,6 +22,18 @@
                 </div>
             </div>
 
+            @if(session('success'))
+                <div style="background: rgba(34, 197, 94, 0.12); border: 1px solid rgba(34, 197, 94, 0.25); padding: 14px 18px; border-radius: 10px; color: #4ade80; font-size: 13px; font-weight: 500; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+                    <span>{{ session('success') }}</span>
+                </div>
+            @endif
+
+            @if(session('error'))
+                <div style="background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.25); padding: 14px 18px; border-radius: 10px; color: #f87171; font-size: 13px; font-weight: 500; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+                    <span>{{ session('error') }}</span>
+                </div>
+            @endif
+
             <div class="card">
                 <div class="card-header">
                     <span class="card-title">Riwayat Aktivitas</span>
@@ -42,6 +54,9 @@
                                     <th style="padding: 12px; font-size: 13px; color: rgba(255,255,255,0.5);">Barang</th>
                                     <th style="padding: 12px; font-size: 13px; color: rgba(255,255,255,0.5);">Stok Berubah</th>
                                     <th style="padding: 12px; font-size: 13px; color: rgba(255,255,255,0.5);">Deskripsi</th>
+                                    @role('admin')
+                                    <th style="padding: 12px; font-size: 13px; color: rgba(255,255,255,0.5); text-align: right;">Aksi</th>
+                                    @endrole
                                 </tr>
                             </thead>
                             <tbody>
@@ -57,6 +72,20 @@
                                         {{ $history->jumlah_sebelum ?? '-' }} &rarr; {{ $history->jumlah_sesudah ?? '-' }}
                                     </td>
                                     <td style="padding: 12px; font-size: 14px;">{{ $history->deskripsi ?? '-' }}</td>
+                                    @role('admin')
+                                    <td style="padding: 12px; text-align: right;">
+                                        <form action="{{ route('history.destroy', $history) }}" method="POST" onsubmit="return confirm('Yakin ingin menghapus catatan riwayat ini? Ini tidak mengembalikan stok barang.')" style="display:inline;">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" title="Hapus Riwayat" style="background: none; border: none; color: #f87171; cursor: pointer; padding: 4px;">
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18">
+                                                    <polyline points="3 6 5 6 21 6"/>
+                                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                                                </svg>
+                                            </button>
+                                        </form>
+                                    </td>
+                                    @endrole
                                 </tr>
                                 @endforeach
                             </tbody>

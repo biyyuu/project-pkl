@@ -37,7 +37,7 @@
             Barang Keluar
         </a>
 
-        @hasanyrole('admin|kasub')
+        @can('view-approval')
         <a href="{{ route('approval.index') }}" class="nav-item {{ request()->routeIs('approval.*') ? 'active' : '' }}" id="nav-approval">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
@@ -45,7 +45,7 @@
             </svg>
             Approval
         </a>
-        @endhasanyrole
+        @endcan
 
         <a href="{{ route('history.index') }}" class="nav-item {{ request()->routeIs('history.*') ? 'active' : '' }}" id="nav-history">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

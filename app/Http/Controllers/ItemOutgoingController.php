@@ -18,7 +18,7 @@ class ItemOutgoingController extends Controller
     {
         $user = auth()->user();
 
-        $query = ItemOutgoing::with(['item', 'borrower', 'recorder']);
+        $query = ItemOutgoing::with(['item' => function ($q) { $q->withTrashed(); }, 'borrower', 'recorder']);
 
         // Search filter
         if ($request->filled('search')) {
@@ -148,6 +148,11 @@ class ItemOutgoingController extends Controller
                     }
                     $newItem->decrement('jumlah', $newJumlah);
                 }
+            } else {
+                // For pending/rejected, just check if new stock is sufficient
+                if ($newItem->jumlah < $newJumlah) {
+                    throw new \Exception('Stok tidak mencukupi. Stok tersedia: ' . $newItem->jumlah);
+                }
             }
 
             $itemOutgoing->update([
@@ -193,21 +198,12 @@ class ItemOutgoingController extends Controller
                 ItemHistory::create([
                     'item_id' => $itemOutgoing->item_id,
                     'user_id' => auth()->id(),
-                    'action' => 'edit',
+                    'action' => 'selesai',
                     'jumlah_sebelum' => $jumlahSebelum,
                     'jumlah_sesudah' => $jumlahSebelum + $itemOutgoing->jumlah_keluar,
-                    'deskripsi' => 'Pembatalan barang keluar: ' . $itemOutgoing->jumlah_keluar . ' unit dikembalikan ke stok',
+                    'deskripsi' => 'Transaksi selesai/dibatalkan: ' . $itemOutgoing->jumlah_keluar . ' unit dikembalikan ke stok',
                 ]);
             }
-            // Log history
-            ItemHistory::create([
-                'item_id' => $itemOutgoing->item_id,
-                'user_id' => auth()->id(),
-                'action' => 'selesai',
-                'jumlah_sebelum' => $jumlahSebelum,
-                'jumlah_sesudah' => $jumlahSebelum + $itemOutgoing->jumlah_keluar,
-                'deskripsi' => 'Peminjaman selesai: ' . $itemOutgoing->jumlah_keluar . ' unit barang telah dikembalikan ke stok.',
-            ]);
 
             $itemOutgoing->delete();
         });

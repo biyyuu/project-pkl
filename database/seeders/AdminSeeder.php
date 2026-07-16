@@ -13,39 +13,31 @@ class AdminSeeder extends Seeder
      */
     public function run(): void
     {
-        $admin = User::create([
-            'name' => 'Admin',
-            'email' => 'adminpusdatin@gmail.com',
-            'password' => Hash::make('pusdatin123'),
-            'role' => 'admin',
-        ]);
-        
-        $admin->assignRole('admin');
-        User::updateOrCreate(
+        $admin = User::updateOrCreate(
             ['email' => 'adminpusdatin@gmail.com'],
             [
                 'name' => 'Admin',
                 'password' => Hash::make('pusdatin123'),
-                'role' => 'admin',
             ]
         );
+        $admin->assignRole('admin');
 
-        User::updateOrCreate(
+        $kasub = User::updateOrCreate(
             ['email' => 'kasub@gmail.com'],
             [
                 'name' => 'Kasub',
                 'password' => Hash::make('pusdatin123'),
-                'role' => 'kasub',
             ]
         );
+        $kasub->assignRole('kasub');
 
-        User::updateOrCreate(
+        $kabid = User::updateOrCreate(
             ['email' => 'kabid@gmail.com'],
             [
                 'name' => 'Kabid',
                 'password' => Hash::make('pusdatin123'),
-                'role' => 'kabid',
             ]
         );
+        $kabid->assignRole('kabid');
     }
 }

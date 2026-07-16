@@ -12,7 +12,7 @@ class ItemOutgoing extends Model
     protected $fillable = [
         'item_id', 'borrower_id', 'recorded_by',
         'jumlah_keluar', 'tanggal_keluar', 'tanggal_kembali',
-        'keperluan', 'keterangan',
+        'keperluan', 'keterangan', 'status',
     ];
 
     protected $casts = [

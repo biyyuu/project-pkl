@@ -14,12 +14,12 @@ class ApprovalController extends Controller
     {
         $user = auth()->user();
         
-        // Ensure only Kasub or Admin can view
-        if (!$user->hasRole(['admin', 'kasub'])) {
+        // Permission check is handled by middleware, but keep as safety net
+        if (!$user->can('view-approval')) {
             return redirect()->route('dashboard')->with('error', 'Akses ditolak.');
         }
 
-        $query = ItemOutgoing::with(['item', 'borrower', 'recorder'])
+        $query = ItemOutgoing::with(['item' => function ($q) { $q->withTrashed(); }, 'borrower', 'recorder'])
             ->where('status', 'pending');
 
         if ($request->filled('search')) {
@@ -46,7 +46,7 @@ class ApprovalController extends Controller
     public function approve(Request $request, ItemOutgoing $itemOutgoing)
     {
         $user = auth()->user();
-        if (!$user->hasRole(['admin', 'kasub'])) {
+        if (!$user->can('approve-outgoings')) {
             return back()->with('error', 'Akses ditolak.');
         }
 
@@ -83,7 +83,7 @@ class ApprovalController extends Controller
     public function reject(Request $request, ItemOutgoing $itemOutgoing)
     {
         $user = auth()->user();
-        if (!$user->hasRole(['admin', 'kasub'])) {
+        if (!$user->can('reject-outgoings')) {
             return back()->with('error', 'Akses ditolak.');
         }
 
