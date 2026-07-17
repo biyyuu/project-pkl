@@ -22,9 +22,23 @@ Route::post('/logout', [AuthController::class, 'logout'])
     ->name('logout')
     ->middleware('auth');
 
+// Forgot Password (inline on login page, triggered after 2 failed attempts)
+Route::post('/forgot-password', [AuthController::class, 'forgotPassword'])
+    ->name('password.email')
+    ->middleware('guest');
+
 // Dashboard
 Route::get('/dashboard', [DashboardController::class, 'index'])
     ->name('dashboard')
+    ->middleware('auth');
+
+// Profile
+Route::get('/profile', [\App\Http\Controllers\ProfileController::class, 'show'])
+    ->name('profile')
+    ->middleware('auth');
+
+Route::post('/profile/update-password', [\App\Http\Controllers\ProfileController::class, 'updatePassword'])
+    ->name('profile.update-password')
     ->middleware('auth');
 
 // All authenticated routes

@@ -23,7 +23,7 @@
             <div class="header">
                 <div class="header-left">
                     <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 4px;">
-                        <h1 style="margin-bottom: 0;">Halo, {{ $user->name }}!</h1>
+                        <h1 style="margin-bottom: 0;">Halo, selamat datang!</h1>
                         @php
                             $roleLabels = [
                                 'admin' => 'Admin',

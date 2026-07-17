@@ -11,11 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Update any existing 'staff' role to a valid enum role 'admin' before altering the column
-        \Illuminate\Support\Facades\DB::table('users')->where('role', 'staff')->update(['role' => 'admin']);
-
         Schema::table('users', function (Blueprint $table) {
-            $table->enum('role', ['admin', 'kasub', 'kabid'])->default('kabid')->change();
+            $table->string('recovery_email')->nullable()->after('email');
         });
     }
 
@@ -25,7 +22,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->enum('role', ['admin', 'staff'])->default('staff')->change();
+            $table->dropColumn('recovery_email');
         });
     }
 };

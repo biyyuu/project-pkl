@@ -458,6 +458,16 @@
             color: #fbbf24;
         }
 
+        .action-badge.selesai {
+            background: rgba(16, 185, 129, 0.12);
+            color: #34d399;
+        }
+
+        .action-badge.ditolak {
+            background: rgba(239, 68, 68, 0.12);
+            color: #f87171;
+        }
+
         /* ===== RANKED LIST ===== */
         .ranked-list {
             list-style: none;

@@ -16,19 +16,21 @@ class DummyUserSeeder extends Seeder
     public function run(): void
     {
         $kabid = User::updateOrCreate(
-            ['email' => 'kabid@example.com'],
+            ['email' => 'kabidpusdatin@gmail.com'],
             [
                 'name' => 'Bapak Kabid',
-                'password' => Hash::make('password')
+                'password' => Hash::make('password'),
+                'recovery_email' => 'kabidpusdatin@gmail.com',
             ]
         );
         $kabid->assignRole('kabid');
 
         $kasub = User::updateOrCreate(
-            ['email' => 'kasub@example.com'],
+            ['email' => 'kasubpusdatin@gmail.com'],
             [
                 'name' => 'Bapak Kasub (Approval)',
-                'password' => Hash::make('password')
+                'password' => Hash::make('password'),
+                'recovery_email' => 'kasubpusdatin@gmail.com',
             ]
         );
         $kasub->assignRole('kasub');

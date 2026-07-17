@@ -213,6 +213,106 @@
             margin-bottom: 4px;
         }
 
+        /* ===== SUCCESS MESSAGE ===== */
+        .success-message {
+            background: rgba(34, 197, 94, 0.12);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            border-radius: 6px;
+            padding: 12px 14px;
+            font-size: 13px;
+            color: #4ade80;
+            margin-bottom: 4px;
+            width: 100%;
+            max-width: 340px;
+            line-height: 1.5;
+        }
+
+        /* ===== FORGOT PASSWORD SECTION ===== */
+        .forgot-section {
+            width: 100%;
+            max-width: 340px;
+            margin-top: 16px;
+            animation: fadeSlideIn 0.4s ease-out;
+        }
+
+        @keyframes fadeSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-8px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .forgot-warning {
+            background: rgba(234, 179, 8, 0.10);
+            border: 1px solid rgba(234, 179, 8, 0.25);
+            border-radius: 6px;
+            padding: 12px 14px;
+            font-size: 12.5px;
+            color: #facc15;
+            line-height: 1.5;
+            margin-bottom: 12px;
+        }
+
+        .forgot-warning svg {
+            width: 14px;
+            height: 14px;
+            vertical-align: -2px;
+            margin-right: 4px;
+            fill: #facc15;
+        }
+
+        .forgot-btn {
+            width: 100%;
+            padding: 11px 20px;
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            font-weight: 500;
+            letter-spacing: 0.2px;
+            color: #facc15;
+            background: rgba(234, 179, 8, 0.08);
+            border: 1px solid rgba(234, 179, 8, 0.25);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .forgot-btn:hover {
+            background: rgba(234, 179, 8, 0.16);
+            border-color: rgba(234, 179, 8, 0.4);
+            box-shadow: 0 4px 16px rgba(234, 179, 8, 0.15);
+            transform: translateY(-1px);
+        }
+
+        .forgot-btn:active {
+            transform: translateY(0);
+            background: rgba(234, 179, 8, 0.12);
+        }
+
+        .forgot-btn svg {
+            width: 16px;
+            height: 16px;
+            fill: #facc15;
+        }
+
+        .forgot-email-hint {
+            text-align: center;
+            font-size: 11.5px;
+            color: #777777;
+            margin-top: 8px;
+        }
+
+        .forgot-email-hint strong {
+            color: #999999;
+        }
+
         /* ===== RESPONSIVE ===== */
         @media (max-width: 1024px) {
             .hero-title {
@@ -282,6 +382,14 @@
             .login-form {
                 max-width: 100%;
             }
+
+            .forgot-section {
+                max-width: 100%;
+            }
+
+            .success-message {
+                max-width: 100%;
+            }
         }
     </style>
 </head>
@@ -302,6 +410,17 @@
                 <img src="{{ asset('images/kemenhan-logo.png') }}" alt="Logo Kementerian Pertahanan">
             </div>
 
+            {{-- Success message after forgot password --}}
+            @if (session('forgot_status'))
+                <div class="success-message">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 4px;">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                    </svg>
+                    {{ session('forgot_status') }}
+                </div>
+            @endif
+
             @if ($errors->any())
                 <div class="error-message" style="width: 100%; max-width: 340px; margin-bottom: 16px;">
                     {{ $errors->first() }}
@@ -317,7 +436,7 @@
                         id="username"
                         name="username"
                         placeholder="Username"
-                        value="{{ old('username') }}"
+                        value="{{ old('username', session('login_attempted_email', '')) }}"
                         required
                         autofocus
                     >
@@ -335,6 +454,26 @@
 
                 <button type="submit" class="submit-btn" id="submit-btn">Submit</button>
             </form>
+
+            {{-- Forgot Password section — only visible after 2+ failed attempts --}}
+            @if (session('login_failed_attempts', 0) >= 2)
+                <div class="forgot-section">
+                    <div class="forgot-warning">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+                        Anda sudah gagal login 2x. Klik tombol di bawah untuk menerima password sementara melalui email.
+                    </div>
+                    <form action="{{ route('password.email') }}" method="POST">
+                        @csrf
+                        <button type="submit" class="forgot-btn" id="forgot-btn">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+                            Kirim Password Sementara
+                        </button>
+                    </form>
+                    <p class="forgot-email-hint">
+                        Password akan dikirim ke <strong>{{ session('login_attempted_email') }}</strong>
+                    </p>
+                </div>
+            @endif
         </div>
     </div>
 </body>

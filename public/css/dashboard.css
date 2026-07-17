@@ -450,6 +450,11 @@
             color: #34d399;
         }
 
+        .action-badge.ditolak {
+            background: rgba(239, 68, 68, 0.12);
+            color: #f87171;
+        }
+
         /* ===== RANKED LIST ===== */
         .ranked-list {
             list-style: none;
