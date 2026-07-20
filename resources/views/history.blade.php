@@ -25,7 +25,7 @@
         /* ===== HISTORY CARD ===== */
         .history-card {
             background-color: #2a1f1c;
-            border-radius: 14px;
+            border-radius: 4px;
             border: 1px solid rgba(255,255,255,0.04);
             display: flex;
             flex-direction: column;
@@ -60,7 +60,7 @@
             flex-wrap: wrap;
             background: rgba(255,255,255,0.02);
             padding: 16px;
-            border-radius: 10px;
+            border-radius: 4px;
             border: 1px solid rgba(255,255,255,0.04);
         }
 
@@ -81,7 +81,7 @@
         .filter-input {
             background: rgba(0,0,0,0.20);
             border: 1px solid rgba(255,255,255,0.08);
-            border-radius: 8px;
+            border-radius: 4px;
             padding: 9px 14px;
             color: #ffffff;
             font-family: 'Inter', sans-serif;
@@ -108,7 +108,7 @@
             border: 1px solid #5c1a1a;
             color: #ffffff;
             padding: 9px 18px;
-            border-radius: 8px;
+            border-radius: 4px;
             cursor: pointer;
             font-family: 'Inter', sans-serif;
             font-size: 13px;
@@ -126,7 +126,7 @@
             border: 1px solid rgba(255,255,255,0.1);
             color: rgba(255,255,255,0.7);
             padding: 9px 14px;
-            border-radius: 8px;
+            border-radius: 4px;
             cursor: pointer;
             font-family: 'Inter', sans-serif;
             font-size: 13px;
@@ -151,14 +151,14 @@
             overflow-y: auto;
             margin: 0 22px 22px 22px;
             border: 1px solid rgba(255,255,255,0.05);
-            border-radius: 8px;
+            border-radius: 4px;
             scrollbar-width: thin;
             scrollbar-color: rgba(255,255,255,0.1) transparent;
         }
 
         .table-scroll-area::-webkit-scrollbar { width: 5px; }
         .table-scroll-area::-webkit-scrollbar-track { background: transparent; }
-        .table-scroll-area::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+        .table-scroll-area::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
 
         /* ===== DATA TABLE ===== */
         .history-table {
@@ -206,7 +206,7 @@
         .action-badge {
             display: inline-block;
             padding: 3px 10px;
-            border-radius: 20px;
+            border-radius: 4px;
             font-size: 11px;
             font-weight: 600;
             text-transform: uppercase;
@@ -225,7 +225,7 @@
             color: rgba(255,255,255,0.3);
             cursor: pointer;
             padding: 4px;
-            border-radius: 6px;
+            border-radius: 4px;
             transition: all 0.2s ease;
             display: inline-flex;
         }
@@ -266,7 +266,7 @@
         /* ===== ALERT ===== */
         .alert-history {
             padding: 14px 18px;
-            border-radius: 10px;
+            border-radius: 4px;
             font-size: 13px;
             font-weight: 500;
             margin-bottom: 20px;

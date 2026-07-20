@@ -80,7 +80,7 @@
             align-items: center;
             gap: 12px;
             padding: 11px 16px;
-            border-radius: 10px;
+            border-radius: 4px;
             text-decoration: none;
             color: rgba(255,255,255,0.55);
             font-size: 14px;
@@ -119,7 +119,7 @@
             align-items: center;
             gap: 12px;
             padding: 11px 16px;
-            border-radius: 10px;
+            border-radius: 4px;
             background: none;
             border: none;
             color: rgba(255,255,255,0.55);
@@ -190,7 +190,7 @@
             align-items: center;
             gap: 8px;
             padding: 9px 18px;
-            border-radius: 8px;
+            border-radius: 4px;
             font-family: 'Inter', sans-serif;
             font-size: 13px;
             font-weight: 500;
@@ -221,7 +221,7 @@
         /* ===== MAIN CARD ===== */
         .content-card {
             background-color: #2a1f1c;
-            border-radius: 14px;
+            border-radius: 4px;
             padding: 24px;
             border: 1px solid rgba(255,255,255,0.04);
         }
@@ -251,7 +251,7 @@
             align-items: center;
             gap: 8px;
             padding: 9px 20px;
-            border-radius: 8px;
+            border-radius: 4px;
             font-family: 'Inter', sans-serif;
             font-size: 13px;
             font-weight: 600;
@@ -290,7 +290,7 @@
         .search-box input {
             width: 100%;
             padding: 9px 14px 9px 36px;
-            border-radius: 8px;
+            border-radius: 4px;
             border: 1px solid rgba(255,255,255,0.08);
             background: rgba(255,255,255,0.04);
             color: #ffffff;
@@ -334,7 +334,7 @@
             align-items: center;
             gap: 8px;
             padding: 9px 14px;
-            border-radius: 8px;
+            border-radius: 4px;
             border: 1px solid rgba(255,255,255,0.08);
             background: rgba(255,255,255,0.04);
             color: rgba(255,255,255,0.6);
@@ -412,7 +412,7 @@
         .status-badge {
             display: inline-block;
             padding: 3px 10px;
-            border-radius: 20px;
+            border-radius: 4px;
             font-size: 11px;
             font-weight: 600;
             text-transform: capitalize;
@@ -483,7 +483,7 @@
             justify-content: center;
             width: 32px;
             height: 32px;
-            border-radius: 6px;
+            border-radius: 4px;
             font-size: 12px;
             font-weight: 500;
             text-decoration: none;
@@ -539,7 +539,7 @@
 
         .modal {
             background: #2a1f1c;
-            border-radius: 16px;
+            border-radius: 4px;
             width: 520px;
             max-width: 95vw;
             max-height: 90vh;
@@ -570,7 +570,7 @@
         .modal-close {
             width: 32px;
             height: 32px;
-            border-radius: 8px;
+            border-radius: 4px;
             border: none;
             background: rgba(255,255,255,0.06);
             color: rgba(255,255,255,0.5);
@@ -616,7 +616,7 @@
         .form-control {
             width: 100%;
             padding: 10px 14px;
-            border-radius: 8px;
+            border-radius: 4px;
             border: 1px solid rgba(255,255,255,0.08);
             background: rgba(255,255,255,0.04);
             color: #ffffff;
@@ -670,7 +670,7 @@
         .btn-submit {
             width: 100%;
             padding: 11px;
-            border-radius: 8px;
+            border-radius: 4px;
             border: none;
             background: #5c1a1a;
             color: #ffffff;
@@ -692,7 +692,7 @@
         /* ===== ALERT ===== */
         .alert {
             padding: 12px 16px;
-            border-radius: 8px;
+            border-radius: 4px;
             font-size: 13px;
             font-weight: 500;
             margin-bottom: 20px;
@@ -747,7 +747,7 @@
             color: rgba(255,255,255,0.3);
             cursor: pointer;
             padding: 4px 8px;
-            border-radius: 6px;
+            border-radius: 4px;
             transition: all 0.2s ease;
             display: inline-flex;
             align-items: center;
@@ -774,7 +774,7 @@
             color: #34d399;
             cursor: pointer;
             padding: 5px 10px;
-            border-radius: 6px;
+            border-radius: 4px;
             transition: all 0.2s ease;
             display: inline-flex;
             align-items: center;
@@ -810,7 +810,7 @@
 
         .scroll-area::-webkit-scrollbar-thumb {
             background: rgba(255,255,255,0.1);
-            border-radius: 2px;
+            border-radius: 4px;
         }
 
         /* ===== MODAL SCROLLBAR ===== */
@@ -824,7 +824,7 @@
 
         .modal::-webkit-scrollbar-thumb {
             background: rgba(255,255,255,0.1);
-            border-radius: 2px;
+            border-radius: 4px;
         }
 
         /* ===== SELECT CLEARABLE ===== */
@@ -939,7 +939,7 @@
                             $label = $roleLabels[$user->getRoleNames()->first() ?? 'unknown'] ?? ucfirst($user->getRoleNames()->first() ?? 'unknown');
                             $style = $roleColors[$user->getRoleNames()->first() ?? 'unknown'] ?? 'background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: #ffffff;';
                         @endphp
-                        <span style="font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px; {{ $style }}">
+                        <span style="font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.5px; {{ $style }}">
                             {{ $label }}
                         </span>
                     </div>
@@ -1446,10 +1446,10 @@
                 </form>
                 
                 <div style="display: flex; gap: 12px; justify-content: center;">
-                    <button type="button" onclick="closeSelesaiModal()" style="flex: 1; padding: 11px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.04); color: #ffffff; font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s ease;">
+                    <button type="button" onclick="closeSelesaiModal()" style="flex: 1; padding: 11px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.04); color: #ffffff; font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s ease;">
                         Batal
                     </button>
-                    <button type="button" onclick="submitSelesaiForm()" style="flex: 1; padding: 11px; border-radius: 8px; border: none; background: #10b981; color: #ffffff; font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s ease;">
+                    <button type="button" onclick="submitSelesaiForm()" style="flex: 1; padding: 11px; border-radius: 4px; border: none; background: #10b981; color: #ffffff; font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s ease;">
                         Ya, Selesai
                     </button>
                 </div>

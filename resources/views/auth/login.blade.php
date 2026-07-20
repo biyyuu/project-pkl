@@ -39,7 +39,7 @@
             position: relative;
             flex: 1;
             min-width: 0;
-            border-radius: 20px;
+            border-radius: 4px;
             overflow: hidden;
         }
 
@@ -126,7 +126,7 @@
             color: #333333;
             background-color: #ffffff;
             border: none;
-            border-radius: 6px;
+            border-radius: 4px;
             outline: none;
             transition: box-shadow 0.25s ease;
             -webkit-appearance: none;
@@ -185,7 +185,7 @@
             color: #ffffff;
             background-color: #5c1a1a;
             border: none;
-            border-radius: 6px;
+            border-radius: 4px;
             cursor: pointer;
             transition: all 0.3s ease;
             align-self: center;
@@ -206,7 +206,7 @@
         .error-message {
             background: rgba(220, 53, 53, 0.12);
             border: 1px solid rgba(220, 53, 53, 0.3);
-            border-radius: 6px;
+            border-radius: 4px;
             padding: 10px 14px;
             font-size: 13px;
             color: #f87171;
@@ -217,7 +217,7 @@
         .success-message {
             background: rgba(34, 197, 94, 0.12);
             border: 1px solid rgba(34, 197, 94, 0.3);
-            border-radius: 6px;
+            border-radius: 4px;
             padding: 12px 14px;
             font-size: 13px;
             color: #4ade80;
@@ -249,7 +249,7 @@
         .forgot-warning {
             background: rgba(234, 179, 8, 0.10);
             border: 1px solid rgba(234, 179, 8, 0.25);
-            border-radius: 6px;
+            border-radius: 4px;
             padding: 12px 14px;
             font-size: 12.5px;
             color: #facc15;
@@ -275,7 +275,7 @@
             color: #facc15;
             background: rgba(234, 179, 8, 0.08);
             border: 1px solid rgba(234, 179, 8, 0.25);
-            border-radius: 6px;
+            border-radius: 4px;
             cursor: pointer;
             transition: all 0.3s ease;
             display: flex;
@@ -368,7 +368,7 @@
 
             .hero-card {
                 height: 240px;
-                border-radius: 16px;
+                border-radius: 4px;
             }
 
             .hero-overlay {

@@ -11,9 +11,9 @@
     <link rel="stylesheet" href="{{ asset('css/itemlist.css') }}">
     <style>
         .btn-action-group { display: flex; gap: 6px; align-items: center; }
-        .btn-approve { padding: 6px 12px; background: rgba(34, 197, 94, 0.12); color: #4ade80; border: 1px solid rgba(34,197,94,0.3); border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; transition: 0.2s; }
+        .btn-approve { padding: 6px 12px; background: rgba(34, 197, 94, 0.12); color: #4ade80; border: 1px solid rgba(34,197,94,0.3); border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer; transition: 0.2s; }
         .btn-approve:hover { background: rgba(34, 197, 94, 0.2); }
-        .btn-reject { padding: 6px 12px; background: rgba(239, 68, 68, 0.12); color: #f87171; border: 1px solid rgba(239,68,68,0.3); border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; transition: 0.2s; }
+        .btn-reject { padding: 6px 12px; background: rgba(239, 68, 68, 0.12); color: #f87171; border: 1px solid rgba(239,68,68,0.3); border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer; transition: 0.2s; }
         .btn-reject:hover { background: rgba(239, 68, 68, 0.2); }
     </style>
 </head>
@@ -30,13 +30,13 @@
             </div>
 
             @if(session('success'))
-                <div class="alert-success" style="background: rgba(34, 197, 94, 0.12); border: 1px solid rgba(34, 197, 94, 0.25); padding: 14px 18px; border-radius: 10px; color: #4ade80; font-size: 13px; font-weight: 500; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+                <div class="alert-success" style="background: rgba(34, 197, 94, 0.12); border: 1px solid rgba(34, 197, 94, 0.25); padding: 14px 18px; border-radius: 4px; color: #4ade80; font-size: 13px; font-weight: 500; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
                     <span>{{ session('success') }}</span>
                 </div>
             @endif
 
             @if(session('error'))
-                <div class="alert-error" style="background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.25); padding: 14px 18px; border-radius: 10px; color: #f87171; font-size: 13px; font-weight: 500; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+                <div class="alert-error" style="background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.25); padding: 14px 18px; border-radius: 4px; color: #f87171; font-size: 13px; font-weight: 500; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
                     <span>{{ session('error') }}</span>
                 </div>
             @endif

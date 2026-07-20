@@ -68,7 +68,7 @@
             align-items: center;
             gap: 12px;
             padding: 11px 16px;
-            border-radius: 10px;
+            border-radius: 4px;
             text-decoration: none;
             color: rgba(255,255,255,0.55);
             font-size: 14px;
@@ -107,7 +107,7 @@
             align-items: center;
             gap: 12px;
             padding: 11px 16px;
-            border-radius: 10px;
+            border-radius: 4px;
             background: none;
             border: none;
             color: rgba(255,255,255,0.55);
@@ -178,7 +178,7 @@
             align-items: center;
             gap: 8px;
             padding: 9px 18px;
-            border-radius: 8px;
+            border-radius: 4px;
             font-family: 'Inter', sans-serif;
             font-size: 13px;
             font-weight: 500;
@@ -243,7 +243,7 @@
         /* ===== CARD ===== */
         .card {
             background-color: #2a1f1c;
-            border-radius: 14px;
+            border-radius: 4px;
             padding: 22px;
             border: 1px solid rgba(255,255,255,0.04);
             transition: border-color 0.3s ease;
@@ -272,7 +272,7 @@
             font-size: 11px;
             font-weight: 500;
             padding: 4px 10px;
-            border-radius: 20px;
+            border-radius: 4px;
             background: rgba(255,255,255,0.06);
             color: rgba(255,255,255,0.5);
         }
@@ -286,7 +286,7 @@
 
         .stat-card {
             background: rgba(255,255,255,0.03);
-            border-radius: 12px;
+            border-radius: 4px;
             padding: 18px 16px;
             border: 1px solid rgba(255,255,255,0.04);
         }
@@ -294,7 +294,7 @@
         .stat-card .stat-icon {
             width: 36px;
             height: 36px;
-            border-radius: 10px;
+            border-radius: 4px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -390,7 +390,7 @@
         .status-badge {
             display: inline-block;
             padding: 3px 10px;
-            border-radius: 20px;
+            border-radius: 4px;
             font-size: 11px;
             font-weight: 600;
             text-transform: capitalize;
@@ -420,7 +420,7 @@
         .action-badge {
             display: inline-block;
             padding: 3px 10px;
-            border-radius: 20px;
+            border-radius: 4px;
             font-size: 11px;
             font-weight: 600;
         }
@@ -475,7 +475,7 @@
         .rank-number {
             width: 28px;
             height: 28px;
-            border-radius: 8px;
+            border-radius: 4px;
             background: rgba(139, 92, 246, 0.12);
             color: #a78bfa;
             display: flex;
@@ -533,14 +533,14 @@
             width: 60px;
             height: 6px;
             background: rgba(255,255,255,0.06);
-            border-radius: 3px;
+            border-radius: 4px;
             overflow: hidden;
             flex-shrink: 0;
         }
 
         .avail-bar-fill {
             height: 100%;
-            border-radius: 3px;
+            border-radius: 4px;
             background: linear-gradient(90deg, #4ade80, #22c55e);
         }
 
@@ -584,7 +584,7 @@
 
         .scroll-area::-webkit-scrollbar-thumb {
             background: rgba(255,255,255,0.1);
-            border-radius: 2px;
+            border-radius: 4px;
         }
 
         /* ===== RESPONSIVE ===== */

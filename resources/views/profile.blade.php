@@ -12,7 +12,7 @@
     <style>
         .profile-card {
             background-color: #2a1f1c;
-            border-radius: 14px;
+            border-radius: 4px;
             padding: 30px;
             border: 1px solid rgba(255,255,255,0.04);
             max-width: 600px;
@@ -45,7 +45,7 @@
         .form-control {
             width: 100%;
             padding: 12px 16px;
-            border-radius: 8px;
+            border-radius: 4px;
             border: 1px solid rgba(255,255,255,0.08);
             background: rgba(0,0,0,0.2);
             color: #ffffff;
@@ -72,7 +72,7 @@
             border: none;
             color: #ffffff;
             padding: 12px 24px;
-            border-radius: 8px;
+            border-radius: 4px;
             cursor: pointer;
             font-family: 'Inter', sans-serif;
             font-size: 14px;
@@ -88,7 +88,7 @@
 
         .alert-profile {
             padding: 14px 18px;
-            border-radius: 10px;
+            border-radius: 4px;
             font-size: 13px;
             font-weight: 500;
             margin-bottom: 24px;
@@ -102,6 +102,33 @@
             border: 1px solid rgba(34, 197, 94, 0.25);
             color: #4ade80;
         }
+
+        .password-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        
+        .password-toggle {
+            position: absolute;
+            right: 16px;
+            background: none;
+            border: none;
+            color: rgba(255,255,255,0.55);
+            cursor: pointer;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .password-toggle:hover {
+            color: rgba(255,255,255,0.8);
+        }
+        
+        .info-card {
+            margin-bottom: 24px;
+        }
     </style>
 </head>
 <body>
@@ -113,6 +140,18 @@
                 <div class="header-left">
                     <h1>Profil Saya</h1>
                     <p>Ubah pengaturan akun keamanan Anda.</p>
+                </div>
+            </div>
+
+            <div class="profile-card info-card">
+                <div class="profile-title">Informasi Akun</div>
+                <div class="form-group">
+                    <label class="form-label">Email Aktif</label>
+                    <input type="email" class="form-control" value="{{ auth()->user()->email }}" readonly style="background: rgba(255,255,255,0.02); color: rgba(255,255,255,0.5);">
+                </div>
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label class="form-label">Peran (Role)</label>
+                    <input type="text" class="form-control" value="{{ ucfirst(auth()->user()->roles->first()->name ?? 'Tidak ada peran') }}" readonly style="background: rgba(255,255,255,0.02); color: rgba(255,255,255,0.5);">
                 </div>
             </div>
 
@@ -131,7 +170,15 @@
 
                     <div class="form-group">
                         <label class="form-label">Password Saat Ini</label>
-                        <input type="password" name="current_password" class="form-control" required>
+                        <div class="password-wrapper">
+                            <input type="password" name="current_password" id="current_password" class="form-control" required>
+                            <button type="button" class="password-toggle" onclick="togglePassword('current_password', this)">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                </svg>
+                            </button>
+                        </div>
                         @error('current_password')
                             <span class="error-message">{{ $message }}</span>
                         @enderror
@@ -139,7 +186,15 @@
 
                     <div class="form-group">
                         <label class="form-label">Password Baru</label>
-                        <input type="password" name="password" class="form-control" required>
+                        <div class="password-wrapper">
+                            <input type="password" name="password" id="password" class="form-control" required>
+                            <button type="button" class="password-toggle" onclick="togglePassword('password', this)">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                </svg>
+                            </button>
+                        </div>
                         @error('password')
                             <span class="error-message">{{ $message }}</span>
                         @enderror
@@ -147,7 +202,15 @@
 
                     <div class="form-group">
                         <label class="form-label">Konfirmasi Password Baru</label>
-                        <input type="password" name="password_confirmation" class="form-control" required>
+                        <div class="password-wrapper">
+                            <input type="password" name="password_confirmation" id="password_confirmation" class="form-control" required>
+                            <button type="button" class="password-toggle" onclick="togglePassword('password_confirmation', this)">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                </svg>
+                            </button>
+                        </div>
                     </div>
 
                     <button type="submit" class="btn-submit">Simpan Password Baru</button>
@@ -155,5 +218,18 @@
             </div>
         </main>
     </div>
+
+    <script>
+        function togglePassword(inputId, btn) {
+            const input = document.getElementById(inputId);
+            if (input.type === 'password') {
+                input.type = 'text';
+                btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>`;
+            } else {
+                input.type = 'password';
+                btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>`;
+            }
+        }
+    </script>
 </body>
 </html>

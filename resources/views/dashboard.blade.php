@@ -39,7 +39,7 @@
                             $label = $roleLabels[$roleName] ?? ucfirst($roleName);
                             $style = $roleColors[$roleName] ?? 'background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: #ffffff;';
                         @endphp
-                        <span style="font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px; {{ $style }}">
+                        <span style="font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.5px; {{ $style }}">
                             {{ $label }}
                         </span>
                     </div>
@@ -122,7 +122,7 @@
                 <div class="card" id="card-demand">
                     <div class="card-header" style="display: flex; align-items: center; justify-content: space-between;">
                         <span class="card-title">Demand Peminjaman by Grafik</span>
-                        <select id="chartPeriodSelect" onchange="updateChartPeriod()" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.8); border-radius: 6px; padding: 4px 8px; font-size: 12px; font-family: 'Inter', sans-serif; cursor:pointer; outline:none;">
+                        <select id="chartPeriodSelect" onchange="updateChartPeriod()" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.8); border-radius: 4px; padding: 4px 8px; font-size: 12px; font-family: 'Inter', sans-serif; cursor:pointer; outline:none;">
                             <option value="harian" {{ $chartPeriod === 'harian' ? 'selected' : '' }}>Harian</option>
                             <option value="mingguan" {{ $chartPeriod === 'mingguan' ? 'selected' : '' }}>Mingguan</option>
                             <option value="bulanan" {{ $chartPeriod === 'bulanan' ? 'selected' : '' }}>Bulanan</option>
@@ -321,7 +321,7 @@
         }
         .modal-overlay.show { opacity: 1; }
         .modal {
-            background-color: #2a1f1c; padding: 24px; border-radius: 14px;
+            background-color: #2a1f1c; padding: 24px; border-radius: 4px;
             width: 100%; max-width: 400px; border: 1px solid rgba(255,255,255,0.08);
             transform: translateY(10px); transition: transform 0.25s ease;
         }
@@ -336,13 +336,13 @@
         .form-label { display: block; font-size: 13px; color: rgba(255,255,255,0.7); margin-bottom: 6px; }
         .form-control {
             width: 100%; padding: 10px 12px; background: rgba(0,0,0,0.2);
-            border: 1px solid rgba(255,255,255,0.1); border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.1); border-radius: 4px;
             color: #fff; font-family: 'Inter', sans-serif; font-size: 14px; outline:none;
         }
         .form-control:focus { border-color: rgba(255,255,255,0.3); }
         .btn-submit {
             width: 100%; padding: 12px; background: #fbbf24; border: none;
-            border-radius: 8px; color: #1a1210; font-weight: 600; cursor: pointer;
+            border-radius: 4px; color: #1a1210; font-weight: 600; cursor: pointer;
             margin-top: 10px; font-family: 'Inter', sans-serif;
         }
         .btn-submit:hover { background: #f59e0b; }
