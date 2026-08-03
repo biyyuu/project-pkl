@@ -794,6 +794,47 @@
             height: 13px;
         }
 
+        /* ===== DATE ALERT ROWS ===== */
+        .row-warning {
+            background: rgba(251, 191, 36, 0.08) !important;
+            border-left: 3px solid #fbbf24;
+        }
+
+        .row-warning td:first-child {
+            padding-left: 9px;
+        }
+
+        .row-danger {
+            background: rgba(239, 68, 68, 0.10) !important;
+            border-left: 3px solid #f87171;
+        }
+
+        .row-danger td:first-child {
+            padding-left: 9px;
+        }
+
+        .date-alert-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .date-alert-badge.warning {
+            background: rgba(251, 191, 36, 0.15);
+            color: #fbbf24;
+        }
+
+        .date-alert-badge.danger {
+            background: rgba(239, 68, 68, 0.15);
+            color: #f87171;
+        }
+
         /* ===== SCROLL AREA ===== */
         .scroll-area {
             scrollbar-width: thin;
@@ -1051,8 +1092,6 @@
                                     <th>No. Seri</th>
                                     <th>Peminjam</th>
                                     <th>Jumlah</th>
-                                    <th>Tanggal Keluar</th>
-                                    <th>Status</th>
                                     <th>Tanggal Pinjam</th>
                                     <th>Tanggal Pengembalian</th>
                                     <th>Keperluan</th>
@@ -1065,7 +1104,24 @@
                             </thead>
                             <tbody>
                                 @foreach($outgoings as $index => $outgoing)
-                                <tr>
+                                @php
+                                    $rowClass = '';
+                                    $dateAlertText = '';
+                                    if ($outgoing->tanggal_kembali) {
+                                        $today = \Carbon\Carbon::today();
+                                        $returnDate = $outgoing->tanggal_kembali;
+                                        $daysUntilReturn = $today->diffInDays($returnDate, false);
+
+                                        if ($daysUntilReturn < 0) {
+                                            $rowClass = 'row-danger';
+                                            $dateAlertText = 'Terlambat ' . abs($daysUntilReturn) . ' hari';
+                                        } elseif ($daysUntilReturn <= 3) {
+                                            $rowClass = 'row-warning';
+                                            $dateAlertText = $daysUntilReturn == 0 ? 'Hari ini' : 'Sisa ' . $daysUntilReturn . ' hari';
+                                        }
+                                    }
+                                @endphp
+                                <tr class="{{ $rowClass }}">
                                     <td style="font-size: 12px; color: rgba(255,255,255,0.35);">{{ $outgoings->firstItem() + $index }}</td>
                                     <td style="font-family: monospace; font-size: 12px; color: #fbbf24;">{{ $outgoing->item->no_inventaris ?? '-' }}</td>
                                     <td class="item-name">{{ $outgoing->item->nama_barang ?? '-' }}</td>
@@ -1075,14 +1131,18 @@
                                     <td>{{ $outgoing->jumlah_keluar }}</td>
                                     <td>{{ $outgoing->tanggal_keluar->translatedFormat('d M Y') }}</td>
                                     <td>
-                                        <span class="status-badge" style="
-                                            background: {{ $outgoing->status === 'approved' ? 'rgba(34,197,94,0.12)' : ($outgoing->status === 'rejected' ? 'rgba(239,68,68,0.12)' : 'rgba(251,191,36,0.12)') }};
-                                            color: {{ $outgoing->status === 'approved' ? '#4ade80' : ($outgoing->status === 'rejected' ? '#f87171' : '#fbbf24') }};
-                                            padding: 4px 8px; border-radius: 4px; font-size:11px; font-weight: 600; text-transform: uppercase;">
-                                            {{ $outgoing->status }}
-                                        </span>
+                                        @if($outgoing->tanggal_kembali)
+                                            {{ $outgoing->tanggal_kembali->translatedFormat('d M Y') }}
+                                            @if($dateAlertText)
+                                                <br>
+                                                <span class="date-alert-badge {{ $rowClass === 'row-danger' ? 'danger' : 'warning' }}">
+                                                    {{ $dateAlertText }}
+                                                </span>
+                                            @endif
+                                        @else
+                                            -
+                                        @endif
                                     </td>
-                                    <td>{{ $outgoing->tanggal_kembali ? $outgoing->tanggal_kembali->translatedFormat('d M Y') : '-' }}</td>
                                     <td>{{ $outgoing->keperluan ?? '-' }}</td>
                                     <td style="max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ $outgoing->keterangan ?? '-' }}</td>
                                     <td style="font-size: 12px; color: rgba(255,255,255,0.4);">{{ $outgoing->recorder->name ?? '-' }}</td>
@@ -1105,7 +1165,7 @@
                                                     </svg>
                                                 </button>
                                             </form>
-                                             <button type="button" class="btn-selesai" title="Selesaikan transaksi & kembalikan stok" onclick="confirmSelesai('{{ route('item-outgoing.destroy', $outgoing) }}')">
+                                             <button type="button" class="btn-selesai" title="Selesaikan transaksi & kembalikan stok" onclick="confirmSelesai('{{ route('item-outgoing.selesai', $outgoing) }}')">
                                                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                                                      <polyline points="20 6 9 17 4 12"/>
                                                  </svg>
@@ -1442,7 +1502,6 @@
                 
                 <form id="form-selesai-transaksi" method="POST" style="display: none;">
                     @csrf
-                    @method('DELETE')
                 </form>
                 
                 <div style="display: flex; gap: 12px; justify-content: center;">

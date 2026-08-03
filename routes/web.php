@@ -78,6 +78,10 @@ Route::middleware('auth')->group(function () {
         ->name('item-outgoing.destroy')
         ->middleware('permission:delete-outgoings');
 
+    Route::post('/barang-keluar/{itemOutgoing}/selesai', [ItemOutgoingController::class, 'selesai'])
+        ->name('item-outgoing.selesai')
+        ->middleware('permission:update-outgoings');
+
     // AJAX endpoints
     Route::post('/ajax/items', [\App\Http\Controllers\ItemController::class, 'storeAjax'])
         ->name('items.storeAjax')
@@ -113,4 +117,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/export/laporan', [DashboardController::class, 'exportPdf'])
         ->name('export.pdf')
         ->middleware('permission:export-reports');
+        
+    // === Role Management (Admin Only) ===
+    Route::resource('roles', \App\Http\Controllers\RoleController::class)
+        ->middleware('role:admin');
 });

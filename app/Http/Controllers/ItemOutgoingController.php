@@ -13,12 +13,14 @@ class ItemOutgoingController extends Controller
 {
     /**
      * Display a listing of the resource.
+     * Only shows approved items (pending items are on the approval page).
      */
     public function index(Request $request)
     {
         $user = auth()->user();
 
-        $query = ItemOutgoing::with(['item' => function ($q) { $q->withTrashed(); }, 'borrower', 'recorder']);
+        $query = ItemOutgoing::with(['item' => function ($q) { $q->withTrashed(); }, 'borrower', 'recorder'])
+            ->where('status', 'approved');
 
         // Search filter
         if ($request->filled('search')) {
@@ -63,6 +65,7 @@ class ItemOutgoingController extends Controller
 
     /**
      * Store a newly created resource in storage.
+     * Stock is decremented immediately so the approval page reflects reserved items.
      */
     public function store(Request $request)
     {
@@ -85,8 +88,8 @@ class ItemOutgoingController extends Controller
                 ->withErrors(['jumlah_keluar' => 'Stok tidak mencukupi. Stok tersedia: ' . $item->jumlah]);
         }
 
-        DB::transaction(function () use ($request) {
-            // Create outgoing record (status will be pending by default)
+        DB::transaction(function () use ($request, $item) {
+            // Create outgoing record with status pending
             ItemOutgoing::create([
                 'item_id' => $request->item_id,
                 'borrower_id' => $request->borrower_id,
@@ -98,10 +101,13 @@ class ItemOutgoingController extends Controller
                 'keterangan' => $request->keterangan,
                 'status' => 'pending',
             ]);
+
+            // Decrement stock immediately (reserved for this borrowing request)
+            $item->decrement('jumlah', $request->jumlah_keluar);
         });
 
         return redirect()->route('item-outgoing.index')
-            ->with('success', 'Barang keluar berhasil dicatat.');
+            ->with('success', 'Permintaan peminjaman barang berhasil dibuat. Menunggu persetujuan.');
     }
 
     /**
@@ -125,34 +131,27 @@ class ItemOutgoingController extends Controller
         $newJumlah = $request->jumlah_keluar;
 
         DB::transaction(function () use ($request, $itemOutgoing, $oldItem, $newItem, $oldJumlah, $newJumlah) {
-            if ($itemOutgoing->status === 'approved') {
-                // If same item, adjust the difference
-                if ($oldItem->id === $newItem->id) {
-                    $diff = $newJumlah - $oldJumlah;
-                    if ($diff > 0 && $newItem->jumlah < $diff) {
-                        throw new \Exception('Stok tidak mencukupi. Stok tersedia: ' . $newItem->jumlah);
+            // Stock is already decremented (at borrow time), so adjust differences
+            if ($oldItem->id === $newItem->id) {
+                $diff = $newJumlah - $oldJumlah;
+                if ($diff > 0 && $newItem->jumlah < $diff) {
+                    throw new \Exception('Stok tidak mencukupi. Stok tersedia: ' . $newItem->jumlah);
+                }
+                if ($diff !== 0) {
+                    if ($diff > 0) {
+                        $newItem->decrement('jumlah', $diff);
+                    } else {
+                        $newItem->increment('jumlah', abs($diff));
                     }
-                    if ($diff !== 0) {
-                        if ($diff > 0) {
-                            $newItem->decrement('jumlah', $diff);
-                        } else {
-                            $newItem->increment('jumlah', abs($diff));
-                        }
-                    }
-                } else {
-                    // Restore old item stock
-                    $oldItem->increment('jumlah', $oldJumlah);
-                    // Deduct from new item stock
-                    if ($newItem->jumlah < $newJumlah) {
-                        throw new \Exception('Stok tidak mencukupi. Stok tersedia: ' . $newItem->jumlah);
-                    }
-                    $newItem->decrement('jumlah', $newJumlah);
                 }
             } else {
-                // For pending/rejected, just check if new stock is sufficient
+                // Restore old item stock
+                $oldItem->increment('jumlah', $oldJumlah);
+                // Deduct from new item stock
                 if ($newItem->jumlah < $newJumlah) {
                     throw new \Exception('Stok tidak mencukupi. Stok tersedia: ' . $newItem->jumlah);
                 }
+                $newItem->decrement('jumlah', $newJumlah);
             }
 
             $itemOutgoing->update([
@@ -165,21 +164,54 @@ class ItemOutgoingController extends Controller
                 'keterangan' => $request->keterangan,
             ]);
 
-            if ($itemOutgoing->status === 'approved') {
-                // Log history
-                ItemHistory::create([
-                    'item_id' => $request->item_id,
-                    'user_id' => auth()->id(),
-                    'action' => 'edit',
-                    'jumlah_sebelum' => $oldJumlah,
-                    'jumlah_sesudah' => $newJumlah,
-                    'deskripsi' => 'Edit data barang keluar yang sudah di-approve',
-                ]);
-            }
+            // Log history
+            ItemHistory::create([
+                'item_id' => $request->item_id,
+                'user_id' => auth()->id(),
+                'action' => 'edit',
+                'jumlah_sebelum' => $oldJumlah,
+                'jumlah_sesudah' => $newJumlah,
+                'deskripsi' => 'Edit data barang keluar',
+            ]);
         });
 
         return redirect()->route('item-outgoing.index')
             ->with('success', 'Data barang keluar berhasil diperbarui.');
+    }
+
+    /**
+     * Mark a borrowing as completed (returned).
+     * Restores stock back to daftar barang.
+     */
+    public function selesai(ItemOutgoing $itemOutgoing)
+    {
+        if ($itemOutgoing->status !== 'approved') {
+            return back()->with('error', 'Hanya peminjaman yang sudah disetujui yang bisa diselesaikan.');
+        }
+
+        $item = $itemOutgoing->item;
+
+        DB::transaction(function () use ($itemOutgoing, $item) {
+            $jumlahSebelum = $item->jumlah;
+
+            $itemOutgoing->update(['status' => 'completed']);
+
+            // Restore stock back to daftar barang
+            $item->increment('jumlah', $itemOutgoing->jumlah_keluar);
+
+            // Log history
+            ItemHistory::create([
+                'item_id' => $itemOutgoing->item_id,
+                'user_id' => auth()->id(),
+                'action' => 'selesai',
+                'jumlah_sebelum' => $jumlahSebelum,
+                'jumlah_sesudah' => $jumlahSebelum + $itemOutgoing->jumlah_keluar,
+                'deskripsi' => 'Peminjaman selesai: ' . $itemOutgoing->jumlah_keluar . ' unit dikembalikan ke stok',
+            ]);
+        });
+
+        return redirect()->route('item-outgoing.index')
+            ->with('success', 'Peminjaman selesai. Stok barang telah dikembalikan ke daftar barang.');
     }
 
     /**
@@ -188,8 +220,8 @@ class ItemOutgoingController extends Controller
     public function destroy(ItemOutgoing $itemOutgoing)
     {
         DB::transaction(function () use ($itemOutgoing) {
-            if ($itemOutgoing->status === 'approved') {
-                // Restore stock
+            // Restore stock if the item was still borrowing (pending or approved)
+            if (in_array($itemOutgoing->status, ['pending', 'approved'])) {
                 $item = $itemOutgoing->item;
                 $jumlahSebelum = $item->jumlah;
                 $item->increment('jumlah', $itemOutgoing->jumlah_keluar);
@@ -198,10 +230,10 @@ class ItemOutgoingController extends Controller
                 ItemHistory::create([
                     'item_id' => $itemOutgoing->item_id,
                     'user_id' => auth()->id(),
-                    'action' => 'selesai',
+                    'action' => 'hapus',
                     'jumlah_sebelum' => $jumlahSebelum,
                     'jumlah_sesudah' => $jumlahSebelum + $itemOutgoing->jumlah_keluar,
-                    'deskripsi' => 'Transaksi selesai/dibatalkan: ' . $itemOutgoing->jumlah_keluar . ' unit dikembalikan ke stok',
+                    'deskripsi' => 'Data barang keluar dihapus: ' . $itemOutgoing->jumlah_keluar . ' unit dikembalikan ke stok',
                 ]);
             }
 
@@ -209,6 +241,6 @@ class ItemOutgoingController extends Controller
         });
 
         return redirect()->route('item-outgoing.index')
-            ->with('success', 'Transaksi berhasil diselesaikan. Stok barang telah dikembalikan.');
+            ->with('success', 'Data barang keluar berhasil dihapus.');
     }
 }

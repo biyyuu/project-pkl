@@ -56,7 +56,8 @@
                         <table class="data-table" style="width: 100%; border-collapse: collapse; text-align: left;">
                             <thead>
                                 <tr style="border-bottom: 1px solid rgba(255,255,255,0.1);">
-                                    <th style="padding: 12px; font-size: 13px; color: rgba(255,255,255,0.5);">Tanggal</th>
+                                    <th style="padding: 12px; font-size: 13px; color: rgba(255,255,255,0.5);">Tanggal Pinjam</th>
+                                    <th style="padding: 12px; font-size: 13px; color: rgba(255,255,255,0.5);">Tgl Kembali</th>
                                     <th style="padding: 12px; font-size: 13px; color: rgba(255,255,255,0.5);">Peminjam</th>
                                     <th style="padding: 12px; font-size: 13px; color: rgba(255,255,255,0.5);">Barang</th>
                                     <th style="padding: 12px; font-size: 13px; color: rgba(255,255,255,0.5);">Jml</th>
@@ -69,6 +70,7 @@
                                 @foreach($outgoings as $out)
                                 <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
                                     <td style="padding: 12px; font-size: 14px;">{{ $out->tanggal_keluar->format('d/m/Y') }}</td>
+                                    <td style="padding: 12px; font-size: 14px;">{{ $out->tanggal_kembali ? $out->tanggal_kembali->format('d/m/Y') : '-' }}</td>
                                     <td style="padding: 12px; font-size: 14px;">{{ $out->borrower->nama ?? '-' }}</td>
                                     <td style="padding: 12px; font-size: 14px;">{{ $out->item->nama_barang ?? '-' }}</td>
                                     <td style="padding: 12px; font-size: 14px;">{{ $out->jumlah_keluar }}</td>

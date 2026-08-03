@@ -46,7 +46,8 @@ class ApprovalHistoryTest extends TestCase
             'created_by' => $admin->id,
         ]);
 
-        // Create outgoing item
+        // Create outgoing item (stock already decremented at borrow time)
+        $item->decrement('jumlah', 3);
         $outgoing = ItemOutgoing::create([
             'item_id' => $item->id,
             'borrower_id' => $borrower->id,
@@ -66,15 +67,13 @@ class ApprovalHistoryTest extends TestCase
         // Assertions:
         // 1. Status is updated
         $this->assertEquals('approved', $outgoing->fresh()->status);
-        // 2. Stock is decremented (10 - 3 = 7)
+        // 2. Stock remains at 7 (already decremented at borrow time)
         $this->assertEquals(7, $item->fresh()->jumlah);
         // 3. Item history is created
         $this->assertDatabaseHas('item_histories', [
             'item_id' => $item->id,
             'user_id' => $admin->id,
             'action' => 'keluar',
-            'jumlah_sebelum' => 10,
-            'jumlah_sesudah' => 7,
         ]);
 
         $latestHistory = ItemHistory::where('action', 'keluar')->orderByDesc('id')->first();
@@ -84,7 +83,7 @@ class ApprovalHistoryTest extends TestCase
         $this->assertStringContainsString('Rapat Kerja', $latestHistory->deskripsi);
     }
 
-    public function test_reject_outgoings_logs_to_history()
+    public function test_reject_outgoings_restores_stock_and_logs_history()
     {
         // Create an admin user
         $admin = User::factory()->create();
@@ -107,7 +106,8 @@ class ApprovalHistoryTest extends TestCase
             'created_by' => $admin->id,
         ]);
 
-        // Create outgoing item
+        // Create outgoing item (stock already decremented at borrow time)
+        $item->decrement('jumlah', 2);
         $outgoing = ItemOutgoing::create([
             'item_id' => $item->id,
             'borrower_id' => $borrower->id,
@@ -127,14 +127,14 @@ class ApprovalHistoryTest extends TestCase
         // Assertions:
         // 1. Status is updated to rejected
         $this->assertEquals('rejected', $outgoing->fresh()->status);
-        // 2. Stock remains unchanged (5)
+        // 2. Stock is RESTORED (3 + 2 = 5 original)
         $this->assertEquals(5, $item->fresh()->jumlah);
         // 3. Item history is created
         $this->assertDatabaseHas('item_histories', [
             'item_id' => $item->id,
             'user_id' => $admin->id,
             'action' => 'ditolak',
-            'jumlah_sebelum' => 5,
+            'jumlah_sebelum' => 3,
             'jumlah_sesudah' => 5,
         ]);
 
@@ -145,13 +145,65 @@ class ApprovalHistoryTest extends TestCase
         $this->assertStringContainsString('Presentasi Kerja', $latestHistory->deskripsi);
     }
 
+    public function test_selesai_restores_stock_and_marks_completed()
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole('admin');
+
+        $borrower = Borrower::create([
+            'nama' => 'Peminjam C',
+            'kontak' => '081234567',
+        ]);
+
+        $item = Item::create([
+            'no_inventaris' => 'INV-003',
+            'nama_barang' => 'Monitor LG',
+            'merk' => 'LG',
+            'jumlah' => 8,
+            'kondisi_barang' => 'baik',
+            'user_id' => $admin->id,
+            'created_by' => $admin->id,
+        ]);
+
+        // Simulate: stock already decremented, item approved
+        $item->decrement('jumlah', 2);
+        $outgoing = ItemOutgoing::create([
+            'item_id' => $item->id,
+            'borrower_id' => $borrower->id,
+            'recorded_by' => $admin->id,
+            'jumlah_keluar' => 2,
+            'tanggal_keluar' => now(),
+            'keperluan' => 'Demo',
+            'status' => 'approved',
+        ]);
+
+        // Act: complete the borrowing
+        $response = $this->actingAs($admin)
+            ->post(route('item-outgoing.selesai', $outgoing->id));
+
+        $response->assertStatus(302);
+
+        // Assertions:
+        // 1. Status is completed
+        $this->assertEquals('completed', $outgoing->fresh()->status);
+        // 2. Stock is restored (6 + 2 = 8)
+        $this->assertEquals(8, $item->fresh()->jumlah);
+        // 3. History is logged
+        $this->assertDatabaseHas('item_histories', [
+            'item_id' => $item->id,
+            'action' => 'selesai',
+            'jumlah_sebelum' => 6,
+            'jumlah_sesudah' => 8,
+        ]);
+    }
+
     public function test_history_filters_by_search_and_dates()
     {
         $admin = User::factory()->create();
         $admin->assignRole('admin');
 
         $itemA = Item::create([
-            'no_inventaris' => 'INV-003',
+            'no_inventaris' => 'INV-004',
             'nama_barang' => 'Kursi Kerja',
             'merk' => 'Informa',
             'jumlah' => 10,
@@ -161,7 +213,7 @@ class ApprovalHistoryTest extends TestCase
         ]);
 
         $itemB = Item::create([
-            'no_inventaris' => 'INV-004',
+            'no_inventaris' => 'INV-005',
             'nama_barang' => 'Meja Kerja',
             'merk' => 'Informa',
             'jumlah' => 5,

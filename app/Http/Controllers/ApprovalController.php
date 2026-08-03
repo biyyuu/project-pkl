@@ -55,26 +55,19 @@ class ApprovalController extends Controller
         }
 
         $item = $itemOutgoing->item;
-
-        if ($item->jumlah < $itemOutgoing->jumlah_keluar) {
-            return back()->with('error', 'Stok tidak mencukupi untuk disetujui. Stok tersedia: ' . $item->jumlah);
-        }
-
         $itemOutgoing->loadMissing('borrower');
 
         DB::transaction(function () use ($itemOutgoing, $item, $user) {
-            $jumlahSebelum = $item->jumlah;
-
+            // Stock was already decremented at borrow time, so just update status
             $itemOutgoing->update(['status' => 'approved']);
-            $item->decrement('jumlah', $itemOutgoing->jumlah_keluar);
 
-            // Log history AFTER approval
+            // Log history for approval
             ItemHistory::create([
                 'item_id' => $itemOutgoing->item_id,
                 'user_id' => $user->id,
                 'action' => 'keluar',
-                'jumlah_sebelum' => $jumlahSebelum,
-                'jumlah_sesudah' => $jumlahSebelum - $itemOutgoing->jumlah_keluar,
+                'jumlah_sebelum' => $item->jumlah + $itemOutgoing->jumlah_keluar,
+                'jumlah_sesudah' => $item->jumlah,
                 'deskripsi' => 'Peminjaman disetujui oleh ' . $user->name . ': ' . $itemOutgoing->jumlah_keluar . ' unit untuk ' . ($itemOutgoing->borrower->nama ?? 'Peminjam') . ' (' . ($itemOutgoing->keperluan ?? 'tidak disebutkan') . ')',
             ]);
         });
@@ -97,19 +90,24 @@ class ApprovalController extends Controller
         $itemOutgoing->loadMissing('borrower');
 
         DB::transaction(function () use ($itemOutgoing, $item, $user) {
+            $jumlahSebelum = $item->jumlah;
+
             $itemOutgoing->update(['status' => 'rejected']);
+
+            // Restore stock that was decremented at borrow time
+            $item->increment('jumlah', $itemOutgoing->jumlah_keluar);
 
             // Log history for rejection
             ItemHistory::create([
                 'item_id' => $itemOutgoing->item_id,
                 'user_id' => $user->id,
                 'action' => 'ditolak',
-                'jumlah_sebelum' => $item->jumlah,
-                'jumlah_sesudah' => $item->jumlah,
-                'deskripsi' => 'Peminjaman ditolak oleh ' . $user->name . ': ' . $itemOutgoing->jumlah_keluar . ' unit untuk ' . ($itemOutgoing->borrower->nama ?? 'Peminjam') . ' (' . ($itemOutgoing->keperluan ?? 'tidak disebutkan') . ')',
+                'jumlah_sebelum' => $jumlahSebelum,
+                'jumlah_sesudah' => $jumlahSebelum + $itemOutgoing->jumlah_keluar,
+                'deskripsi' => 'Peminjaman ditolak oleh ' . $user->name . ': ' . $itemOutgoing->jumlah_keluar . ' unit untuk ' . ($itemOutgoing->borrower->nama ?? 'Peminjam') . ' (' . ($itemOutgoing->keperluan ?? 'tidak disebutkan') . ') — stok dikembalikan',
             ]);
         });
 
-        return back()->with('success', 'Permintaan barang keluar ditolak.');
+        return back()->with('success', 'Permintaan barang keluar ditolak. Stok telah dikembalikan.');
     }
 }
