@@ -117,6 +117,14 @@ Route::middleware('auth')->group(function () {
     Route::get('/export/laporan', [DashboardController::class, 'exportPdf'])
         ->name('export.pdf')
         ->middleware('permission:export-reports');
+
+    Route::get('/export/laporan-barang', [DashboardController::class, 'exportBarangPdf'])
+        ->name('export.barang-pdf')
+        ->middleware('permission:export-reports');
+
+    Route::get('/export/laporan-history', [DashboardController::class, 'exportHistoryPdf'])
+        ->name('export.history-pdf')
+        ->middleware('permission:export-reports');
         
     // === Role Management (Admin Only) ===
     Route::resource('roles', \App\Http\Controllers\RoleController::class)

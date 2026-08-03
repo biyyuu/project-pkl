@@ -158,13 +158,29 @@ class DashboardController extends Controller
     {
         $user = auth()->user();
         
-        $query = \App\Models\ItemHistory::with(['item' => function ($q) { $q->withTrashed(); }, 'user'])->orderByDesc('created_at');
+        $query = \App\Models\ItemHistory::with(['item' => function ($q) { $q->withTrashed(); }, 'user'])
+            ->whereIn('action', ['keluar', 'selesai'])
+            ->orderByDesc('created_at');
         
         if ($request->filled('search')) {
             $search = $request->search;
             $query->whereHas('item', function ($q) use ($search) {
                 $q->where('nama_barang', 'like', "%{$search}%");
             });
+        }
+
+        // Filter by action type (keluar / selesai)
+        if ($request->filled('tipe')) {
+            $query->where('action', $request->tipe);
+        }
+
+        // Date range filter
+        if ($request->filled('start_date') && $request->filled('end_date')) {
+            $query->whereBetween('created_at', [$request->start_date . ' 00:00:00', $request->end_date . ' 23:59:59']);
+        } elseif ($request->filled('start_date')) {
+            $query->where('created_at', '>=', $request->start_date . ' 00:00:00');
+        } elseif ($request->filled('end_date')) {
+            $query->where('created_at', '<=', $request->end_date . ' 23:59:59');
         }
         
         $histories = $query->paginate(15)->withQueryString();
@@ -181,5 +197,63 @@ class DashboardController extends Controller
 
         $history->delete();
         return back()->with('success', 'Catatan riwayat berhasil dihapus.');
+    }
+
+    public function exportBarangPdf(Request $request)
+    {
+        $month = $request->query('month', now()->month);
+        $year = $request->query('year', now()->year);
+
+        $items = Item::orderBy('nama_barang', 'asc')->get();
+
+        $monthName = Carbon::create()->month((int) $month)->translatedFormat('F');
+
+        $logoPath = public_path('images/kemenhan-logo.png');
+        $logoBase64 = '';
+        if (file_exists($logoPath)) {
+            $logoData = file_get_contents($logoPath);
+            $logoBase64 = 'data:image/png;base64,' . base64_encode($logoData);
+        }
+
+        $pdf = Pdf::loadView('pdf.laporan-barang', compact('items', 'monthName', 'year', 'logoBase64'))
+                ->setPaper('a4', 'landscape');
+
+        return $pdf->download("Laporan_Daftar_Barang_Inventaris_{$monthName}_{$year}.pdf");
+    }
+
+    public function exportHistoryPdf(Request $request)
+    {
+        $month = $request->query('month', now()->month);
+        $year = $request->query('year', now()->year);
+
+        // Barang keluar (approved) in the selected month
+        $outgoings = ItemOutgoing::with(['item' => function ($q) { $q->withTrashed(); }, 'borrower'])
+            ->where('status', 'approved')
+            ->whereMonth('tanggal_keluar', $month)
+            ->whereYear('tanggal_keluar', $year)
+            ->orderBy('tanggal_keluar', 'asc')
+            ->get();
+
+        // Barang masuk/dikembalikan (completed) in the selected month
+        $returns = ItemOutgoing::with(['item' => function ($q) { $q->withTrashed(); }, 'borrower'])
+            ->where('status', 'completed')
+            ->whereMonth('tanggal_kembali', $month)
+            ->whereYear('tanggal_kembali', $year)
+            ->orderBy('tanggal_kembali', 'asc')
+            ->get();
+
+        $monthName = Carbon::create()->month((int) $month)->translatedFormat('F');
+
+        $logoPath = public_path('images/kemenhan-logo.png');
+        $logoBase64 = '';
+        if (file_exists($logoPath)) {
+            $logoData = file_get_contents($logoPath);
+            $logoBase64 = 'data:image/png;base64,' . base64_encode($logoData);
+        }
+
+        $pdf = Pdf::loadView('pdf.laporan-history', compact('outgoings', 'returns', 'monthName', 'year', 'logoBase64'))
+                ->setPaper('a4', 'landscape');
+
+        return $pdf->download("Laporan_History_Barang_Keluar_Masuk_{$monthName}_{$year}.pdf");
     }
 }

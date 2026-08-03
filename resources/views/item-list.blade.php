@@ -99,15 +99,25 @@
                     </div>
                     <p>Siap memonitoring inventaris?</p>
                 </div>
-                @can('create-items')
-                <button class="btn-export" id="btn-tambah-barang">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="12" y1="5" x2="12" y2="19"/>
-                        <line x1="5" y1="12" x2="19" y2="12"/>
-                    </svg>
-                    Tambah Barang
-                </button>
-                @endcan
+                <div class="header-actions" style="display: flex; gap: 10px; align-items: center;">
+                    <button class="btn-export" onclick="openExportBarangModal()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                            <polyline points="7 10 12 15 17 10"/>
+                            <line x1="12" y1="15" x2="12" y2="3"/>
+                        </svg>
+                        Export
+                    </button>
+                    @can('create-items')
+                    <button class="btn-export" id="btn-tambah-barang">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="12" y1="5" x2="12" y2="19"/>
+                            <line x1="5" y1="12" x2="19" y2="12"/>
+                        </svg>
+                        Tambah Barang
+                    </button>
+                    @endcan
+                </div>
             </div>
 
             <!-- Flash Success Message -->
@@ -467,6 +477,101 @@
 
             editModal.classList.add('active');
         }
+    </script>
+
+    <!-- ===== MODAL EXPORT BARANG ===== -->
+    <style>
+        .modal-export-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+            display: none;
+            align-items: center; justify-content: center;
+            z-index: 999;
+            opacity: 0; transition: opacity 0.25s ease;
+        }
+        .modal-export-overlay.show { opacity: 1; }
+        .modal-export {
+            background-color: #2a1f1c; padding: 24px; border-radius: 4px;
+            width: 100%; max-width: 400px; border: 1px solid rgba(255,255,255,0.08);
+            transform: translateY(10px); transition: transform 0.25s ease;
+        }
+        .modal-export-overlay.show .modal-export { transform: translateY(0); }
+        .modal-export .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .modal-export .modal-title { font-size: 18px; font-weight: 700; color: #fff; margin: 0; }
+        .modal-export .modal-close { background: none; border: none; color: rgba(255,255,255,0.5); cursor: pointer; }
+        .modal-export .modal-close:hover { color: #fff; }
+        .modal-export .form-group { margin-bottom: 16px; }
+        .modal-export .form-label { display: block; font-size: 13px; color: rgba(255,255,255,0.7); margin-bottom: 6px; }
+        .modal-export .form-control-export {
+            width: 100%; padding: 10px 12px; background: rgba(0,0,0,0.2);
+            border: 1px solid rgba(255,255,255,0.1); border-radius: 4px;
+            color: #fff; font-family: 'Inter', sans-serif; font-size: 14px; outline: none;
+        }
+        .modal-export .form-control-export:focus { border-color: rgba(255,255,255,0.3); }
+        .modal-export .btn-download {
+            width: 100%; padding: 12px; background: #fbbf24; border: none;
+            border-radius: 4px; color: #1a1210; font-weight: 600; cursor: pointer;
+            margin-top: 10px; font-family: 'Inter', sans-serif;
+        }
+        .modal-export .btn-download:hover { background: #f59e0b; }
+    </style>
+
+    <div class="modal-export-overlay" id="modal-overlay-export-barang">
+        <div class="modal-export">
+            <div class="modal-header">
+                <h2 class="modal-title">Export Laporan Daftar Barang</h2>
+                <button class="modal-close" type="button" onclick="closeExportBarangModal()">
+                    <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form action="{{ route('export.barang-pdf') }}" method="GET" target="_blank" onsubmit="closeExportBarangModal()">
+                    <div class="form-group">
+                        <label class="form-label">Pilih Bulan</label>
+                        <select class="form-control-export" name="month" required>
+                            @foreach(range(1, 12) as $m)
+                                <option value="{{ $m }}" {{ $m == now()->month ? 'selected' : '' }}>
+                                    {{ \Carbon\Carbon::create()->month($m)->translatedFormat('F') }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Pilih Tahun</label>
+                        <select class="form-control-export" name="year" required>
+                            @foreach(range(now()->year, now()->subYears(5)->year) as $y)
+                                <option value="{{ $y }}" {{ $y == now()->year ? 'selected' : '' }}>{{ $y }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <button type="submit" class="btn-download">Unduh PDF</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openExportBarangModal() {
+            const overlay = document.getElementById('modal-overlay-export-barang');
+            overlay.style.display = 'flex';
+            requestAnimationFrame(() => overlay.classList.add('show'));
+        }
+
+        function closeExportBarangModal() {
+            const overlay = document.getElementById('modal-overlay-export-barang');
+            overlay.classList.remove('show');
+            setTimeout(() => { overlay.style.display = 'none'; }, 250);
+        }
+
+        document.getElementById('modal-overlay-export-barang').addEventListener('click', function(e) {
+            if (e.target === this) closeExportBarangModal();
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') closeExportBarangModal();
+        });
     </script>
 </body>
 </html>
