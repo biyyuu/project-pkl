@@ -253,10 +253,10 @@
                     @endif
                 </div>
 
-                <!-- History Peminjaman -->
+                <!-- History Barang Keluar & Masuk -->
                 <div class="card" id="card-history">
                     <div class="card-header">
-                        <span class="card-title">History Peminjaman</span>
+                        <span class="card-title">History Barang Keluar & Masuk</span>
                         <span class="card-badge">Aktivitas Terbaru</span>
                     </div>
                     @if($historyPeminjaman->isEmpty())
@@ -272,9 +272,9 @@
                             <table class="data-table">
                                 <thead>
                                     <tr>
-                                        <th>Aksi</th>
+                                        <th>Tipe</th>
+                                        <th>Peminjam</th>
                                         <th>Barang</th>
-                                        <th>User</th>
                                         <th>Qty</th>
                                         <th>Waktu</th>
                                     </tr>
@@ -282,19 +282,17 @@
                                 <tbody>
                                     @foreach($historyPeminjaman as $history)
                                     <tr>
-                                        <td><span class="action-badge {{ $history->action }}">{{ ucfirst($history->action) }}</span></td>
-                                        <td class="item-name">{{ $history->item->nama_barang ?? '-' }}</td>
-                                        <td>{{ $history->user->name ?? '-' }}</td>
                                         <td>
-                                            @if($history->jumlah_sebelum !== null && $history->jumlah_sesudah !== null)
-                                                {{ $history->jumlah_sebelum }} → {{ $history->jumlah_sesudah }}
-                                            @elseif($history->jumlah_sesudah !== null)
-                                                {{ $history->jumlah_sesudah }}
+                                            @if($history->status === 'approved')
+                                                <span class="action-badge keluar">Keluar</span>
                                             @else
-                                                -
+                                                <span class="action-badge selesai">Masuk</span>
                                             @endif
                                         </td>
-                                        <td style="font-size: 12px; color: rgba(255,255,255,0.4);">{{ $history->created_at->diffForHumans() }}</td>
+                                        <td class="item-name">{{ $history->borrower->nama ?? '-' }}</td>
+                                        <td>{{ $history->item->nama_barang ?? '-' }}</td>
+                                        <td>{{ $history->jumlah_keluar }}</td>
+                                        <td style="font-size: 12px; color: rgba(255,255,255,0.4);">{{ $history->updated_at->diffForHumans() }}</td>
                                     </tr>
                                     @endforeach
                                 </tbody>

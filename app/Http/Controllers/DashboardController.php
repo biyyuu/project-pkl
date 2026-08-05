@@ -101,9 +101,10 @@ class DashboardController extends Controller
             ->limit(10)
             ->get();
 
-        // --- History Peminjaman (Recent Activity) ---
-        $historyPeminjaman = ItemHistory::with(['item' => function ($q) { $q->withTrashed(); }, 'user'])
-            ->orderByDesc('created_at')
+        // --- History Barang Keluar & Masuk (Recent Activity) ---
+        $historyPeminjaman = ItemOutgoing::with(['item' => function ($q) { $q->withTrashed(); }, 'borrower'])
+            ->whereIn('status', ['approved', 'completed'])
+            ->orderByDesc('updated_at')
             ->limit(10)
             ->get();
 
