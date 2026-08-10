@@ -145,14 +145,29 @@
 
             <div class="profile-card info-card">
                 <div class="profile-title">Informasi Akun</div>
-                <div class="form-group">
-                    <label class="form-label">Email Aktif</label>
-                    <input type="email" class="form-control" value="{{ auth()->user()->email }}" readonly style="background: rgba(255,255,255,0.02); color: rgba(255,255,255,0.5);">
-                </div>
-                <div class="form-group" style="margin-bottom: 0;">
-                    <label class="form-label">Peran (Role)</label>
-                    <input type="text" class="form-control" value="{{ ucfirst(auth()->user()->roles->first()->name ?? 'Tidak ada peran') }}" readonly style="background: rgba(255,255,255,0.02); color: rgba(255,255,255,0.5);">
-                </div>
+
+                @if(session('username_success'))
+                    <div class="alert-profile success">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                        <span>{{ session('username_success') }}</span>
+                    </div>
+                @endif
+
+                <form action="{{ route('profile.update-username') }}" method="POST">
+                    @csrf
+                    <div class="form-group">
+                        <label class="form-label">Username</label>
+                        <input type="text" name="username" class="form-control" value="{{ auth()->user()->username }}" required>
+                        @error('username')
+                            <span class="error-message">{{ $message }}</span>
+                        @enderror
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label class="form-label">Peran (Role)</label>
+                        <input type="text" class="form-control" value="{{ ucfirst(auth()->user()->roles->first()->name ?? 'Tidak ada peran') }}" readonly style="background: rgba(255,255,255,0.02); color: rgba(255,255,255,0.5);">
+                    </div>
+                    <button type="submit" class="btn-submit" style="margin-top: 20px;">Simpan Username</button>
+                </form>
             </div>
 
             <div class="profile-card">

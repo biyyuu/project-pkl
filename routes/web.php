@@ -41,6 +41,10 @@ Route::post('/profile/update-password', [\App\Http\Controllers\ProfileController
     ->name('profile.update-password')
     ->middleware('auth');
 
+Route::post('/profile/update-username', [\App\Http\Controllers\ProfileController::class, 'updateUsername'])
+    ->name('profile.update-username')
+    ->middleware('auth');
+
 // All authenticated routes
 Route::middleware('auth')->group(function () {
 

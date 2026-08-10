@@ -24,7 +24,7 @@ class RoleController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255|unique:roles,name',
-            'email' => 'required|email|unique:users,email',
+            'username' => 'required|string|max:255|unique:users,username',
             'password' => 'required|min:6',
             'permissions' => 'nullable|array',
             'permissions.*' => 'exists:permissions,id',
@@ -33,16 +33,17 @@ class RoleController extends Controller
         // Create the generic user for this role
         $user = \App\Models\User::create([
             'name' => $request->name,
-            'email' => $request->email,
+            'username' => $request->username,
+            'email' => $request->username . '@pusdatin.local',
             'password' => \Illuminate\Support\Facades\Hash::make($request->password),
-            'recovery_email' => $request->email, // Using the same email for recovery initially
         ]);
 
         $role = Role::create(['name' => $request->name]);
 
         // Assign permissions to the role
         if ($request->has('permissions')) {
-            $role->syncPermissions($request->permissions);
+            $perms = Permission::whereIn('id', $request->permissions)->get();
+            $role->syncPermissions($perms);
         }
 
         // Assign the role to the user
@@ -74,7 +75,7 @@ class RoleController extends Controller
 
         $request->validate([
             'name' => 'required|string|max:255|unique:roles,name,' . $role->id,
-            'email' => 'required|email' . ($user ? '|unique:users,email,'.$user->id : '|unique:users,email'),
+            'username' => 'required|string|max:255' . ($user ? '|unique:users,username,'.$user->id : '|unique:users,username'),
             'password' => 'nullable|min:6',
             'permissions' => 'nullable|array',
             'permissions.*' => 'exists:permissions,id',
@@ -84,7 +85,8 @@ class RoleController extends Controller
         $role->update(['name' => $request->name]);
 
         if ($request->has('permissions')) {
-            $role->syncPermissions($request->permissions);
+            $perms = Permission::whereIn('id', $request->permissions)->get();
+            $role->syncPermissions($perms);
         } else {
             $role->syncPermissions([]);
         }
@@ -92,7 +94,7 @@ class RoleController extends Controller
         if ($user) {
             $user->update([
                 'name' => $request->name,
-                'email' => $request->email,
+                'username' => $request->username,
             ]);
 
             if ($request->filled('password')) {

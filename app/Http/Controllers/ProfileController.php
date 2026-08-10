@@ -14,6 +14,20 @@ class ProfileController extends Controller
         return view('profile');
     }
 
+    public function updateUsername(Request $request)
+    {
+        $user = auth()->user();
+
+        $request->validate([
+            'username' => 'required|string|max:255|unique:users,username,' . $user->id,
+        ]);
+
+        $user->username = $request->username;
+        $user->save();
+
+        return back()->with('username_success', 'Username berhasil diubah.');
+    }
+
     public function updatePassword(Request $request)
     {
 
