@@ -8,15 +8,9 @@ use Spatie\Permission\Models\Permission;
 
 class RoleAndPermissionSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        // Reset cached roles and permissions
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
-
-        // Create permissions
         $permissions = [
             'view-dashboard',
             'view-items',
@@ -37,13 +31,9 @@ class RoleAndPermissionSeeder extends Seeder
         foreach ($permissions as $permission) {
             Permission::firstOrCreate(['name' => $permission, 'guard_name' => 'web']);
         }
-
-        // Create roles and assign permissions
-        // Admin — full access
         $admin = Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'web']);
         $admin->syncPermissions($permissions);
 
-        // Kasub — view all + approval + create outgoings
         $kasub = Role::firstOrCreate(['name' => 'kasub', 'guard_name' => 'web']);
         $kasub->syncPermissions([
             'view-dashboard',
@@ -57,7 +47,6 @@ class RoleAndPermissionSeeder extends Seeder
             'export-reports',
         ]);
 
-        // Kabid — view only
         $kabid = Role::firstOrCreate(['name' => 'kabid', 'guard_name' => 'web']);
         $kabid->syncPermissions([
             'view-dashboard',

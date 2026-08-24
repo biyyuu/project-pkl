@@ -10,7 +10,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('css/dashboard.css') }}">
     <style>
-        /* Override the global overflow:hidden so this page can scroll */
         html, body {
             overflow: hidden;
         }
@@ -22,7 +21,6 @@
             flex-direction: column;
         }
 
-        /* ===== HISTORY CARD ===== */
         .history-card {
             background-color: #2a1f1c;
             border-radius: 4px;
@@ -144,7 +142,6 @@
             color: #ffffff;
         }
 
-        /* ===== SCROLLABLE TABLE AREA ===== */
         .table-scroll-area {
             flex: 1;
             min-height: 0;
@@ -202,7 +199,6 @@
             background-color: rgba(255,255,255,0.02);
         }
 
-        /* ===== ACTION BADGES ===== */
         .action-badge {
             display: inline-block;
             padding: 3px 10px;
@@ -214,7 +210,6 @@
         .action-badge.keluar { background: rgba(251, 191, 36, 0.12); color: #fbbf24; }
         .action-badge.selesai { background: rgba(16, 185, 129, 0.12); color: #34d399; }
 
-        /* ===== DELETE BUTTON ===== */
         .btn-delete-history {
             background: none;
             border: none;
@@ -231,7 +226,6 @@
             background: rgba(248,113,113,0.08);
         }
 
-        /* ===== EMPTY STATE ===== */
         .history-empty {
             display: flex;
             flex-direction: column;
@@ -259,7 +253,6 @@
             margin-top: 4px;
         }
 
-        /* ===== ALERT ===== */
         .alert-history {
             padding: 14px 18px;
             border-radius: 4px;
@@ -283,7 +276,6 @@
             color: #f87171;
         }
 
-        /* ===== RESULT COUNT ===== */
         .result-count {
             font-size: 12px;
             color: rgba(255,255,255,0.35);
@@ -334,7 +326,6 @@
                     <span class="history-card-title">Riwayat Barang Keluar & Masuk</span>
                 </div>
 
-                <!-- FILTER BAR -->
                 <div class="filter-bar">
                     <form action="{{ route('history.index') }}" method="GET" class="filter-form">
                         <div class="filter-group">

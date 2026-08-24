@@ -280,8 +280,8 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="nama_pengadaan">Nama Pengadaan</label>
-                    <input type="text" id="nama_pengadaan" name="nama_pengadaan" placeholder="Nama pengadaan" value="{{ old('nama_pengadaan') }}">
+                    <label for="nama_pengadaan">Nama Kepemilikan</label>
+                    <input type="text" id="nama_pengadaan" name="nama_pengadaan" placeholder="Nama Kepemilikan" value="{{ old('nama_pengadaan') }}">
                 </div>
 
                 <div class="form-group">

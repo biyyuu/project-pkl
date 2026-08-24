@@ -14,12 +14,8 @@
 </head>
 <body>
     <div class="app-layout">
-        <!-- ===== SIDEBAR ===== -->
         @include('components.sidebar')
-
-        <!-- ===== MAIN CONTENT ===== -->
         <main class="main-content">
-            <!-- Header -->
             <div class="header">
                 <div class="header-left">
                     <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 4px;">
@@ -60,11 +56,7 @@
                 </div>
             </div>
 
-            <!-- Dashboard Grid -->
             <div class="dashboard-grid">
-
-                <!-- ===== ROW 1: Total Pinjaman + Demand Chart ===== -->
-                <!-- Total Stats -->
                 <div class="card" id="card-total">
                     <div class="card-header">
                         <span class="card-title">Total Pinjaman</span>
@@ -119,7 +111,6 @@
                     </div>
                 </div>
 
-                <!-- Demand Chart -->
                 <div class="card" id="card-demand">
                     <div class="card-header" style="display: flex; align-items: center; justify-content: space-between;">
                         <span class="card-title">Demand Peminjaman by Grafik</span>
@@ -135,8 +126,6 @@
                     </div>
                 </div>
 
-                <!-- ===== ROW 2: Daftar Peminjam + Barang Paling Sering Dipinjam ===== -->
-                <!-- Daftar Peminjam -->
                 <div class="card" id="card-peminjam">
                     <div class="card-header">
                         <span class="card-title">Daftar Peminjam</span>
@@ -176,7 +165,6 @@
                     @endif
                 </div>
 
-                <!-- Barang Paling Sering Dipinjam -->
                 <div class="card" id="card-sering-dipinjam">
                     <div class="card-header">
                         <span class="card-title">Barang Paling Sering Dipinjam</span>
@@ -205,8 +193,6 @@
                     @endif
                 </div>
 
-                <!-- ===== ROW 3: List Barang Tersedia + History Peminjaman ===== -->
-                <!-- List Barang Tersedia -->
                 <div class="card" id="card-barang-tersedia">
                     <div class="card-header">
                         <span class="card-title">List Barang Tersedia</span>
@@ -254,7 +240,6 @@
                     @endif
                 </div>
 
-                <!-- History Barang Keluar & Masuk -->
                 <div class="card" id="card-history">
                     <div class="card-header">
                         <span class="card-title">History Barang Keluar & Masuk</span>
@@ -302,11 +287,10 @@
                     @endif
                 </div>
 
-            </div><!-- end dashboard-grid -->
+            </div>
         </main>
     </div>
 
-    <!-- ===== MODAL EXPORT ===== -->
     <style>
         .modal-overlay {
             position: fixed;
@@ -380,8 +364,6 @@
             </div>
         </div>
     </div>
-
-    <!-- ===== CHART JS ===== -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const ctx = document.getElementById('demandChart');
@@ -459,7 +441,6 @@
             window.location.href = url.toString();
         }
 
-        // ===== MODAL EXPORT =====
         function openExportModal() {
             const overlay = document.getElementById('modal-overlay-export');
             overlay.style.display = 'flex';
@@ -474,7 +455,6 @@
             }, 250);
         }
         
-        // Close modal when clicking outside
         document.getElementById('modal-overlay-export').addEventListener('click', function(e) {
             if (e.target === this) closeExportModal();
         });
