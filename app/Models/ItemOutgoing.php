@@ -22,7 +22,7 @@ class ItemOutgoing extends Model
 
     public function item()
     {
-        return $this->belongsTo(Item::class);
+        return $this->belongsTo(SstockBrg::class, 'item_id', 'idx');
     }
 
     public function borrower()

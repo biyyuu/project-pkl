@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Item;
 use App\Models\ItemHistory;
+use App\Models\ItemOutgoing;
+use App\Models\SstockBrg;
 use Illuminate\Http\Request;
 
 class ItemController extends Controller
@@ -13,7 +15,8 @@ class ItemController extends Controller
      */
     public function index()
     {
-        $items = Item::all();
+        $items = SstockBrg::orderBy('nama')->get();
+
         return view('item-list', compact('items'));
     }
 
@@ -23,7 +26,7 @@ class ItemController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'no_inventaris' => 'required|string|unique:items,no_inventaris',
+            'no_inventaris' => 'required|string|unique:sstock_brg,noinven',
             'nama_barang' => 'required|string|max:255',
             'merk' => 'nullable|string|max:255',
             'serial_number' => 'nullable|string|max:255',
@@ -34,17 +37,24 @@ class ItemController extends Controller
             'keterangan' => 'nullable|string',
         ]);
 
-        $validated['user_id'] = auth()->id();
-        $validated['created_by'] = auth()->id();
-
-        $item = Item::create($validated);
+        $item = SstockBrg::create([
+            'noinven' => $validated['no_inventaris'],
+            'nama' => $validated['nama_barang'],
+            'merk' => $validated['merk'] ?? null,
+            'snumber' => $validated['serial_number'] ?? null,
+            'stock' => $validated['jumlah'],
+            'pengadaan' => $validated['nama_pengadaan'] ?? null,
+            'lokasi' => $validated['tahun_pengadaan'] ?? null,
+            'kondisi' => $validated['kondisi_barang'],
+            'keterangan' => $validated['keterangan'] ?? null,
+        ]);
 
         ItemHistory::create([
-            'item_id' => $item->id,
+            'item_id' => $item->idx,
             'user_id' => auth()->id(),
             'action' => 'tambah',
             'jumlah_sebelum' => 0,
-            'jumlah_sesudah' => $item->jumlah,
+            'jumlah_sesudah' => $item->stock,
             'deskripsi' => 'Menambahkan barang baru ke sistem.',
         ]);
 
@@ -54,10 +64,10 @@ class ItemController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Item $item)
+    public function update(Request $request, SstockBrg $item)
     {
         $validated = $request->validate([
-            'no_inventaris' => 'required|string|unique:items,no_inventaris,' . $item->id,
+            'no_inventaris' => 'required|string|unique:sstock_brg,noinven,' . $item->idx . ',idx',
             'nama_barang' => 'required|string|max:255',
             'merk' => 'nullable|string|max:255',
             'serial_number' => 'nullable|string|max:255',
@@ -68,15 +78,25 @@ class ItemController extends Controller
             'keterangan' => 'nullable|string',
         ]);
 
-        $jumlahSebelum = $item->jumlah;
-        $item->update($validated);
+        $jumlahSebelum = $item->stock;
+        $item->update([
+            'noinven' => $validated['no_inventaris'],
+            'nama' => $validated['nama_barang'],
+            'merk' => $validated['merk'] ?? null,
+            'snumber' => $validated['serial_number'] ?? null,
+            'stock' => $validated['jumlah'],
+            'pengadaan' => $validated['nama_pengadaan'] ?? null,
+            'lokasi' => $validated['tahun_pengadaan'] ?? null,
+            'kondisi' => $validated['kondisi_barang'],
+            'keterangan' => $validated['keterangan'] ?? null,
+        ]);
 
         ItemHistory::create([
-            'item_id' => $item->id,
+            'item_id' => $item->idx,
             'user_id' => auth()->id(),
             'action' => 'edit',
             'jumlah_sebelum' => $jumlahSebelum,
-            'jumlah_sesudah' => $item->jumlah,
+            'jumlah_sesudah' => $item->stock,
             'deskripsi' => 'Mengubah data barang / stok.',
         ]);
 
@@ -86,19 +106,19 @@ class ItemController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Item $item)
+    public function destroy(SstockBrg $item)
     {
         // Check if item has active outgoings
-        if ($item->outgoings()->exists()) {
+        if (ItemOutgoing::where('item_id', $item->idx)->exists()) {
             return redirect()->route('item')
                 ->with('error', 'Barang tidak bisa dihapus karena masih memiliki data barang keluar terkait.');
         }
 
-        $jumlahSebelum = $item->jumlah;
+        $jumlahSebelum = $item->stock;
         $item->delete();
 
         ItemHistory::create([
-            'item_id' => $item->id,
+            'item_id' => $item->idx,
             'user_id' => auth()->id(),
             'action' => 'hapus',
             'jumlah_sebelum' => $jumlahSebelum,
@@ -115,7 +135,7 @@ class ItemController extends Controller
     public function storeAjax(Request $request)
     {
         $request->validate([
-            'no_inventaris' => 'required|string|unique:items,no_inventaris',
+            'no_inventaris' => 'required|string|unique:sstock_brg,noinven',
             'nama_barang' => 'required|string|max:255',
             'merk' => 'nullable|string|max:255',
             'serial_number' => 'nullable|string|max:255',
@@ -123,17 +143,26 @@ class ItemController extends Controller
             'kondisi_barang' => 'required|in:baik,rusak_ringan,rusak_berat,hilang',
         ]);
 
-        $data = $request->only([
-            'no_inventaris', 'nama_barang', 'merk', 'serial_number', 'jumlah', 'kondisi_barang'
+        $item = SstockBrg::create([
+            'noinven' => $request->no_inventaris,
+            'nama' => $request->nama_barang,
+            'merk' => $request->merk,
+            'snumber' => $request->serial_number,
+            'stock' => $request->jumlah,
+            'kondisi' => $request->kondisi_barang,
         ]);
-        $data['user_id'] = auth()->id();
-        $data['created_by'] = auth()->id();
-
-        $item = Item::create($data);
 
         return response()->json([
             'success' => true,
-            'data' => $item
+            'data' => [
+                'idx' => $item->idx,
+                'noinven' => $item->noinven,
+                'nama' => $item->nama,
+                'merk' => $item->merk,
+                'snumber' => $item->snumber,
+                'stock' => $item->stock,
+                'kondisi' => $item->kondisi,
+            ]
         ]);
     }
 }

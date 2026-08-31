@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Item;
 use App\Models\ItemHistory;
 use App\Models\ItemOutgoing;
+use App\Models\SstockBrg;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -19,15 +19,15 @@ class ApprovalController extends Controller
             return redirect()->route('dashboard')->with('error', 'Akses ditolak.');
         }
 
-        $query = ItemOutgoing::with(['item' => function ($q) { $q->withTrashed(); }, 'borrower', 'recorder'])
+        $query = ItemOutgoing::with(['item', 'borrower', 'recorder'])
             ->where('status', 'pending');
 
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->whereHas('item', function ($q2) use ($search) {
-                    $q2->where('nama_barang', 'like', "%{$search}%")
-                       ->orWhere('no_inventaris', 'like', "%{$search}%");
+                    $q2->where('nama', 'like', "%{$search}%")
+                       ->orWhere('noinven', 'like', "%{$search}%");
                 })
                 ->orWhereHas('borrower', function ($q2) use ($search) {
                     $q2->where('nama', 'like', "%{$search}%");
@@ -54,7 +54,7 @@ class ApprovalController extends Controller
             return back()->with('error', 'Data sudah diproses sebelumnya.');
         }
 
-        $item = $itemOutgoing->item;
+        $item = SstockBrg::findOrFail($itemOutgoing->item_id);
         $itemOutgoing->loadMissing('borrower');
 
         DB::transaction(function () use ($itemOutgoing, $item, $user) {
@@ -66,8 +66,8 @@ class ApprovalController extends Controller
                 'item_id' => $itemOutgoing->item_id,
                 'user_id' => $user->id,
                 'action' => 'keluar',
-                'jumlah_sebelum' => $item->jumlah + $itemOutgoing->jumlah_keluar,
-                'jumlah_sesudah' => $item->jumlah,
+                'jumlah_sebelum' => $item->stock + $itemOutgoing->jumlah_keluar,
+                'jumlah_sesudah' => $item->stock,
                 'deskripsi' => 'Peminjaman disetujui oleh ' . $user->name . ': ' . $itemOutgoing->jumlah_keluar . ' unit untuk ' . ($itemOutgoing->borrower->nama ?? 'Peminjam') . ' (' . ($itemOutgoing->keperluan ?? 'tidak disebutkan') . ')',
             ]);
         });
@@ -86,16 +86,16 @@ class ApprovalController extends Controller
             return back()->with('error', 'Data sudah diproses sebelumnya.');
         }
 
-        $item = $itemOutgoing->item;
+        $item = SstockBrg::findOrFail($itemOutgoing->item_id);
         $itemOutgoing->loadMissing('borrower');
 
         DB::transaction(function () use ($itemOutgoing, $item, $user) {
-            $jumlahSebelum = $item->jumlah;
+            $jumlahSebelum = $item->stock;
 
             $itemOutgoing->update(['status' => 'rejected']);
 
             // Restore stock that was decremented at borrow time
-            $item->increment('jumlah', $itemOutgoing->jumlah_keluar);
+            $item->increment('stock', $itemOutgoing->jumlah_keluar);
 
             // Log history for rejection
             ItemHistory::create([

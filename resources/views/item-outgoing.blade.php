@@ -1248,8 +1248,8 @@
                                 <select class="form-control" name="item_id" id="item_id" required>
                                     <option value="">-- Pilih Barang --</option>
                                     @foreach($items as $item)
-                                        <option value="{{ $item->id }}" {{ old('item_id') == $item->id ? 'selected' : '' }}>
-                                            {{ $item->nama_barang }} (Stok: {{ $item->jumlah }})
+                                        <option value="{{ $item->idx }}" {{ old('item_id') == $item->idx ? 'selected' : '' }}>
+                                            {{ $item->noinven }} - {{ $item->nama }} (Stok: {{ $item->stock }})
                                         </option>
                                     @endforeach
                                 </select>
@@ -1427,9 +1427,9 @@
                         <div class="select-clearable" id="wrap-edit_out_item_id">
                             <select class="form-control" name="item_id" id="edit_out_item_id" required>
                                 <option value="">-- Pilih Barang --</option>
-                                @foreach(\App\Models\Item::orderBy('nama_barang')->get() as $item)
-                                    <option value="{{ $item->id }}">
-                                        {{ $item->nama_barang }} (Stok: {{ $item->jumlah }})
+                                @foreach($items as $item)
+                                    <option value="{{ $item->idx }}">
+                                        {{ $item->noinven }} - {{ $item->nama }} (Stok: {{ $item->stock }})
                                     </option>
                                 @endforeach
                             </select>
@@ -1648,10 +1648,15 @@
                 });
                 const result = await res.json();
                 if(result.success) {
-                    const select = document.getElementById('item_id');
-                    const option = new Option(`${result.data.nama_barang} (Stok: ${result.data.jumlah})`, result.data.id, true, true);
-                    select.add(option);
-                    select.dispatchEvent(new Event('change'));
+                    const mainSelect = document.getElementById('item_id');
+                    const editSelect = document.getElementById('edit_out_item_id');
+                    const label = `${result.data.noinven} - ${result.data.nama} (Stok: ${result.data.stock})`;
+                    const option = new Option(label, result.data.idx, true, true);
+                    mainSelect.add(option);
+                    if (editSelect) {
+                        editSelect.add(new Option(label, result.data.idx, false, false));
+                    }
+                    mainSelect.dispatchEvent(new Event('change'));
                     closeItemModal();
                     document.getElementById('form-add-item').reset();
                 } else {
@@ -1729,12 +1734,27 @@
         function openEditOutgoingModal(outgoing) {
             const overlay = document.getElementById('modal-overlay-edit-outgoing');
             const form = document.getElementById('form-edit-outgoing');
+            const editSelect = document.getElementById('edit_out_item_id');
 
             // Set action URL
             form.action = '/barang-keluar/' + outgoing.id;
 
+            // Pastikan barang yang sedang dipinjam tetap bisa dipilih walau stoknya sudah tidak masuk daftar aktif
+            if (editSelect && outgoing.item_id) {
+                const existingOption = Array.from(editSelect.options).find(option => option.value == outgoing.item_id);
+                if (!existingOption) {
+                    const itemLabel = outgoing.item
+                        ? `${outgoing.item.no_inventaris ?? '-'} - ${outgoing.item.nama_barang ?? '-'}`
+                        : `Barang #${outgoing.item_id}`;
+                    const stockLabel = outgoing.item && typeof outgoing.item.jumlah !== 'undefined'
+                        ? ` (Stok: ${outgoing.item.jumlah})`
+                        : '';
+                    editSelect.add(new Option(itemLabel + stockLabel, outgoing.item_id, false, false));
+                }
+            }
+
             // Fill fields
-            document.getElementById('edit_out_item_id').value = outgoing.item_id;
+            editSelect.value = outgoing.item_id;
             document.getElementById('edit_out_item_id').dispatchEvent(new Event('change'));
             document.getElementById('edit_out_borrower_id').value = outgoing.borrower_id;
             document.getElementById('edit_out_borrower_id').dispatchEvent(new Event('change'));

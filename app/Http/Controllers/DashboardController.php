@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Item;
 use App\Models\ItemHistory;
 use App\Models\ItemOutgoing;
+use App\Models\SstockBrg;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -25,14 +26,14 @@ class DashboardController extends Controller
             ->count();
 
         // --- Total Barang ---
-        $totalBarang = Item::count();
-        $totalStok = Item::sum('jumlah');
+        $totalBarang = SstockBrg::count();
+        $totalStok = SstockBrg::sum('stock');
 
         // --- Total Peminjam (Unique Borrowers) ---
         $totalPeminjam = \App\Models\ItemOutgoing::where('status', 'approved')->distinct('borrower_id')->count('borrower_id');
 
         // --- Barang Kondisi Baik ---
-        $barangBaik = Item::where('kondisi_barang', 'baik')->count();
+        $barangBaik = SstockBrg::whereRaw("LOWER(TRIM(COALESCE(kondisi, ''))) = ?", ['baik'])->count();
 
         // --- Demand Peminjaman by Grafik ---
         $chartPeriod = $request->query('chart_period', '6_bulan');
@@ -79,7 +80,7 @@ class DashboardController extends Controller
 
         // --- Daftar Peminjam (latest outgoings with borrower info) ---
         $daftarPeminjam = ItemOutgoing::where('status', 'approved')
-            ->with(['borrower', 'item' => function ($q) { $q->withTrashed(); }])
+            ->with(['borrower', 'item'])
             ->orderByDesc('tanggal_keluar')
             ->orderByDesc('created_at')
             ->limit(10)
@@ -91,18 +92,18 @@ class DashboardController extends Controller
             ->groupBy('item_id')
             ->orderByDesc('total_keluar')
             ->limit(5)
-            ->with(['item' => function ($q) { $q->withTrashed(); }])
+            ->with(['item'])
             ->get();
 
         // --- List Barang Tersedia ---
-        $barangTersedia = Item::where('jumlah', '>', 0)
-            ->where('kondisi_barang', 'baik')
-            ->orderByDesc('jumlah')
+        $barangTersedia = SstockBrg::where('stock', '>', 0)
+            ->whereRaw("LOWER(TRIM(COALESCE(kondisi, ''))) = ?", ['baik'])
+            ->orderByDesc('stock')
             ->limit(10)
             ->get();
 
         // --- History Barang Keluar & Masuk (Recent Activity) ---
-        $historyPeminjaman = ItemOutgoing::with(['item' => function ($q) { $q->withTrashed(); }, 'borrower'])
+        $historyPeminjaman = ItemOutgoing::with(['item', 'borrower'])
             ->whereIn('status', ['approved', 'completed'])
             ->orderByDesc('updated_at')
             ->limit(10)
@@ -132,7 +133,7 @@ class DashboardController extends Controller
         $year = $request->query('year', now()->year);
 
         // Fetch data for the selected month & year
-        $outgoings = ItemOutgoing::with(['item' => function ($q) { $q->withTrashed(); }, 'borrower', 'recorder'])
+        $outgoings = ItemOutgoing::with(['item', 'borrower', 'recorder'])
             ->where('status', 'approved')
             ->whereMonth('tanggal_keluar', $month)
             ->whereYear('tanggal_keluar', $year)
@@ -159,14 +160,14 @@ class DashboardController extends Controller
     {
         $user = auth()->user();
         
-        $query = \App\Models\ItemHistory::with(['item' => function ($q) { $q->withTrashed(); }, 'user'])
+        $query = \App\Models\ItemHistory::with(['item', 'user'])
             ->whereIn('action', ['keluar', 'selesai'])
             ->orderByDesc('created_at');
         
         if ($request->filled('search')) {
             $search = $request->search;
             $query->whereHas('item', function ($q) use ($search) {
-                $q->where('nama_barang', 'like', "%{$search}%");
+                $q->where('nama', 'like', "%{$search}%");
             });
         }
 
@@ -205,7 +206,19 @@ class DashboardController extends Controller
         $month = $request->query('month', now()->month);
         $year = $request->query('year', now()->year);
 
-        $items = Item::orderBy('nama_barang', 'asc')->get();
+        $items = SstockBrg::orderBy('nama', 'asc')->get()->map(function (SstockBrg $item) {
+            return (object) [
+                'no_inventaris' => $item->noinven,
+                'nama_barang' => $item->nama,
+                'merk' => $item->merk,
+                'serial_number' => $item->snumber,
+                'jumlah' => $item->stock,
+                'nama_pengadaan' => $item->pengadaan,
+                'tahun_pengadaan' => $item->lokasi,
+                'kondisi_barang' => $item->kondisi,
+                'keterangan' => $item->keterangan,
+            ];
+        });
 
         $monthName = Carbon::create()->month((int) $month)->translatedFormat('F');
 
@@ -228,7 +241,7 @@ class DashboardController extends Controller
         $year = $request->query('year', now()->year);
 
         // Barang keluar (approved) in the selected month
-        $outgoings = ItemOutgoing::with(['item' => function ($q) { $q->withTrashed(); }, 'borrower'])
+        $outgoings = ItemOutgoing::with(['item', 'borrower'])
             ->where('status', 'approved')
             ->whereMonth('tanggal_keluar', $month)
             ->whereYear('tanggal_keluar', $year)
@@ -236,7 +249,7 @@ class DashboardController extends Controller
             ->get();
 
         // Barang masuk/dikembalikan (completed) in the selected month
-        $returns = ItemOutgoing::with(['item' => function ($q) { $q->withTrashed(); }, 'borrower'])
+        $returns = ItemOutgoing::with(['item', 'borrower'])
             ->where('status', 'completed')
             ->whereMonth('tanggal_kembali', $month)
             ->whereYear('tanggal_kembali', $year)

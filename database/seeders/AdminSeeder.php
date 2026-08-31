@@ -14,7 +14,9 @@ class AdminSeeder extends Seeder
             ['email' => 'adminpusdatin@gmail.com'],
             [
                 'name' => 'Admin',
+                'username' => 'adminpusdatin',
                 'password' => Hash::make('pusdatin123'),
+                'recovery_email' => 'adminpusdatin@gmail.com',
             ]
         );
         $admin->assignRole('admin');
@@ -23,7 +25,9 @@ class AdminSeeder extends Seeder
             ['email' => 'kasub@gmail.com'],
             [
                 'name' => 'Kasub',
+                'username' => 'kasub',
                 'password' => Hash::make('pusdatin123'),
+                'recovery_email' => 'kasub@gmail.com',
             ]
         );
         $kasub->assignRole('kasub');
@@ -32,7 +36,9 @@ class AdminSeeder extends Seeder
             ['email' => 'kabid@gmail.com'],
             [
                 'name' => 'Kabid',
+                'username' => 'kabid',
                 'password' => Hash::make('pusdatin123'),
+                'recovery_email' => 'kabid@gmail.com',
             ]
         );
         $kabid->assignRole('kabid');

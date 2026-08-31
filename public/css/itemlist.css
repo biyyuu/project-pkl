@@ -12,6 +12,41 @@ html, body {
   color: #ffffff;
 }
 
+/* ===== SCROLLBAR THEME ===== */
+.main-content,
+.item-table-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: #3a252549 #1a1210;
+}
+
+.main-content::-webkit-scrollbar,
+.item-table-scroll::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+.main-content::-webkit-scrollbar-track,
+.item-table-scroll::-webkit-scrollbar-track {
+    background: #241816;
+}
+
+.main-content::-webkit-scrollbar-thumb,
+.item-table-scroll::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #7a2323 0%, #5c1a1a 100%);
+    border-radius: 999px;
+    border: 2px solid #241816;
+}
+
+.main-content::-webkit-scrollbar-thumb:hover,
+.item-table-scroll::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, #8d2a2a 0%, #6d1f1f 100%);
+}
+
+.main-content::-webkit-scrollbar-corner,
+.item-table-scroll::-webkit-scrollbar-corner {
+    background: #241816;
+}
+
 /* ===== MODAL OVERLAY ===== */
 .modal-overlay {
     position: fixed;

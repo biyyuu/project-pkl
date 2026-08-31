@@ -16,6 +16,7 @@ class DummyUserSeeder extends Seeder
             ['email' => 'kabidpusdatin@gmail.com'],
             [
                 'name' => 'Bapak Kabid',
+                'username' => 'kabidpusdatin',
                 'password' => Hash::make('password'),
                 'recovery_email' => 'kabidpusdatin@gmail.com',
             ]
@@ -26,6 +27,7 @@ class DummyUserSeeder extends Seeder
             ['email' => 'kasubpusdatin@gmail.com'],
             [
                 'name' => 'Bapak Kasub (Approval)',
+                'username' => 'kasubpusdatin',
                 'password' => Hash::make('password'),
                 'recovery_email' => 'kasubpusdatin@gmail.com',
             ]

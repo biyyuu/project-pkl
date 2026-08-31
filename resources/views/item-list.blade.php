@@ -65,6 +65,108 @@
             gap: 10px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
+
+        .item-table-shell {
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 6px;
+            overflow: hidden;
+            background: rgba(0,0,0,0.12);
+        }
+
+        .item-table-scroll {
+            max-height: 520px;
+            overflow: auto;
+        }
+
+        .item-table-scroll .data-table {
+            width: 100%;
+            min-width: 1120px;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        .item-table-scroll .data-table thead th {
+            position: sticky;
+            top: 0;
+            z-index: 2;
+            background: #221816;
+            color: rgba(255,255,255,0.72);
+            text-align: left;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.6px;
+            text-transform: uppercase;
+            padding: 14px 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            white-space: nowrap;
+        }
+
+        .item-table-scroll .data-table tbody td {
+            padding: 14px 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            vertical-align: top;
+            color: rgba(255,255,255,0.88);
+            font-size: 13px;
+        }
+
+        .item-table-scroll .data-table tbody tr:hover {
+            background: rgba(255,255,255,0.03);
+        }
+
+        .table-code {
+            font-family: monospace;
+            font-size: 12px;
+            color: #fbbf24;
+            white-space: nowrap;
+        }
+
+        .table-name {
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .table-muted {
+            color: rgba(255,255,255,0.58);
+            line-height: 1.45;
+        }
+
+        .table-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 5px 10px;
+            border-radius: 999px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.08);
+            color: rgba(255,255,255,0.82);
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: capitalize;
+            white-space: nowrap;
+        }
+
+        .table-badge.good {
+            background: rgba(16, 185, 129, 0.12);
+            border-color: rgba(16, 185, 129, 0.24);
+            color: #34d399;
+        }
+
+        .table-badge.warning {
+            background: rgba(251, 191, 36, 0.12);
+            border-color: rgba(251, 191, 36, 0.24);
+            color: #fbbf24;
+        }
+
+        .table-badge.danger {
+            background: rgba(248, 113, 113, 0.12);
+            border-color: rgba(248, 113, 113, 0.24);
+            color: #f87171;
+        }
+
+        .table-actions-cell {
+            width: 88px;
+            white-space: nowrap;
+        }
     </style>
 </head>
 <body>
@@ -170,7 +272,8 @@
                         <p>Belum ada data barang</p>
                     </div>
                 @else
-                    <div class="scroll-area" style="max-height: 520px;">
+                    <div class="item-table-shell">
+                        <div class="item-table-scroll">
                         <table class="data-table">
                             <thead>
                                 <tr>
@@ -190,48 +293,67 @@
                             </thead>
                             <tbody>
                                 @foreach($items as $item)
-                                <tr>
-                                    <td style="font-family: monospace; font-size: 12px; color: #fbbf24;">{{ $item->no_inventaris }}</td>
-                                    <td class="item-name">{{ $item->nama_barang }}</td>
-                                    <td>{{ $item->merk ?? '-' }}</td>
-                                    <td>{{ $item->serial_number ?? '-' }}</td>
-                                    <td>{{ $item->jumlah }}</td>
-                                    <td>{{ $item->nama_pengadaan ?? '-' }}</td>
-                                    <td>{{ $item->tahun_pengadaan ?? '-' }}</td>
-                                    <td>
-                                        <span class="status-badge {{ $item->kondisi_barang }}">
-                                            {{ str_replace('_', ' ', $item->kondisi_barang) }}
-                                        </span>
-                                    </td>
-                                    <td style="font-size: 12px; color: rgba(255,255,255,0.5); max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="{{ $item->keterangan }}">
-                                        {{ $item->keterangan ?? '-' }}
-                                    </td>
-                                    @can('update-items')
-                                    <td>
-                                        <div class="btn-action-group">
-                                            <button type="button" class="btn-edit" title="Edit Barang" onclick="openEditModal({{ json_encode($item) }})">
-                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                                                </svg>
-                                            </button>
-                                            <form action="{{ route('items.destroy', $item) }}" method="POST" onsubmit="return confirm('Yakin ingin menghapus barang ini?')" style="display:inline;">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="btn-delete-item" title="Hapus Barang">
+                                    @php
+                                        $status = match($item->kondisi) {
+                                            'baik' => 'good',
+                                            'rusak_ringan' => 'warning',
+                                            'rusak_berat', 'hilang' => 'danger',
+                                            default => '',
+                                        };
+                                    @endphp
+                                    <tr>
+                                        <td class="table-code">{{ $item->noinven }}</td>
+                                        <td class="table-name">{{ $item->nama }}</td>
+                                        <td>{{ $item->merk ?? '-' }}</td>
+                                        <td>{{ $item->snumber ?? '-' }}</td>
+                                        <td>{{ $item->stock }}</td>
+                                        <td>{{ $item->pengadaan ?? '-' }}</td>
+                                        <td>{{ $item->lokasi ?? '-' }}</td>
+                                        <td>
+                                            <span class="table-badge {{ $status }}">
+                                                {{ $item->kondisi ? str_replace('_', ' ', $item->kondisi) : '-' }}
+                                            </span>
+                                        </td>
+                                        <td class="table-muted" title="{{ $item->keterangan }}">
+                                            {{ $item->keterangan ?? '-' }}
+                                        </td>
+
+                                        @can('update-items')
+                                        <td class="table-actions-cell">
+                                            <div class="btn-action-group">
+                                                <button
+                                                    type="button"
+                                                    class="btn-edit"
+                                                    title="Edit Barang"
+                                                    onclick='openEditModal(@json($item))'>
                                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                                        <polyline points="3 6 5 6 21 6"/>
-                                                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                                                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                                                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
                                                     </svg>
                                                 </button>
-                                            </form>
-                                        </div>
-                                    </td>
-                                    @endcan
-                                </tr>
+
+                                                <form action="{{ route('items.destroy', $item->idx) }}"
+                                                      method="POST"
+                                                      onsubmit="return confirm('Yakin ingin menghapus barang ini?')"
+                                                      style="display:inline;">
+                                                    @csrf
+                                                    @method('DELETE')
+
+                                                    <button type="submit" class="btn-delete-item" title="Hapus Barang">
+                                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                            <polyline points="3 6 5 6 21 6"/>
+                                                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                                                        </svg>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </td>
+                                        @endcan
+                                    </tr>
                                 @endforeach
                             </tbody>
                         </table>
+                        </div>
                     </div>
                 @endif
             </div>
@@ -462,17 +584,17 @@
             const editForm = document.getElementById('editForm');
 
             // Set form action URL
-            editForm.action = '/daftar-barang/' + item.id;
+            editForm.action = '/daftar-barang/' + (item.idx || item.id);
 
             // Fill in fields
-            document.getElementById('edit_no_inventaris').value = item.no_inventaris || '';
-            document.getElementById('edit_nama_barang').value = item.nama_barang || '';
+            document.getElementById('edit_no_inventaris').value = item.noinven || item.no_inventaris || '';
+            document.getElementById('edit_nama_barang').value = item.nama || item.nama_barang || '';
             document.getElementById('edit_merk').value = item.merk || '';
-            document.getElementById('edit_serial_number').value = item.serial_number || '';
-            document.getElementById('edit_jumlah').value = item.jumlah || 0;
-            document.getElementById('edit_nama_pengadaan').value = item.nama_pengadaan || '';
-            document.getElementById('edit_tahun_pengadaan').value = item.tahun_pengadaan || '';
-            document.getElementById('edit_kondisi_barang').value = item.kondisi_barang || 'baik';
+            document.getElementById('edit_serial_number').value = item.snumber || item.serial_number || '';
+            document.getElementById('edit_jumlah').value = item.stock ?? item.jumlah ?? 0;
+            document.getElementById('edit_nama_pengadaan').value = item.pengadaan || item.nama_pengadaan || '';
+            document.getElementById('edit_tahun_pengadaan').value = item.lokasi || item.tahun_pengadaan || '';
+            document.getElementById('edit_kondisi_barang').value = item.kondisi || item.kondisi_barang || 'baik';
             document.getElementById('edit_keterangan').value = item.keterangan || '';
 
             editModal.classList.add('active');

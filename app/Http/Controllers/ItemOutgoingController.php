@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Item;
+use App\Models\Borrower;
 use App\Models\ItemHistory;
 use App\Models\ItemOutgoing;
-use App\Models\Borrower;
+use App\Models\SstockBrg;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -19,16 +19,15 @@ class ItemOutgoingController extends Controller
     {
         $user = auth()->user();
 
-        $query = ItemOutgoing::with(['item' => function ($q) { $q->withTrashed(); }, 'borrower', 'recorder'])
+        $query = ItemOutgoing::with(['item', 'borrower', 'recorder'])
             ->where('status', 'approved');
 
-        // Search filter
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->whereHas('item', function ($q2) use ($search) {
-                    $q2->where('nama_barang', 'like', "%{$search}%")
-                       ->orWhere('no_inventaris', 'like', "%{$search}%");
+                    $q2->where('nama', 'like', "%{$search}%")
+                        ->orWhere('noinven', 'like', "%{$search}%");
                 })
                 ->orWhereHas('borrower', function ($q2) use ($search) {
                     $q2->where('nama', 'like', "%{$search}%");
@@ -37,7 +36,6 @@ class ItemOutgoingController extends Controller
             });
         }
 
-        // Date range filter
         if ($request->filled('start_date') && $request->filled('end_date')) {
             $query->whereBetween('tanggal_keluar', [$request->start_date, $request->end_date]);
         } elseif ($request->filled('start_date')) {
@@ -51,13 +49,12 @@ class ItemOutgoingController extends Controller
             ->paginate(15)
             ->withQueryString();
 
-        // Get available items for the modal (items with stock > 0)
-        $items = Item::where('jumlah', '>', 0)
-            ->where('kondisi_barang', 'baik')
-            ->orderBy('nama_barang')
+        $items = SstockBrg::query()
+            ->where('stock', '>', 0)
+            ->whereRaw("LOWER(TRIM(COALESCE(kondisi, ''))) = ?", ['baik'])
+            ->orderBy('nama')
             ->get();
 
-        // Get all borrowers for the modal
         $borrowers = Borrower::orderBy('nama')->get();
 
         return view('item-outgoing', compact('user', 'outgoings', 'items', 'borrowers'));
@@ -70,7 +67,7 @@ class ItemOutgoingController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'item_id' => 'required|exists:items,id',
+            'item_id' => 'required|exists:sstock_brg,idx',
             'borrower_id' => 'required|exists:borrowers,id',
             'jumlah_keluar' => 'required|integer|min:1',
             'tanggal_keluar' => 'required|date',
@@ -79,19 +76,17 @@ class ItemOutgoingController extends Controller
             'keterangan' => 'nullable|string',
         ]);
 
-        $item = Item::findOrFail($request->item_id);
+        $stockItem = SstockBrg::findOrFail($request->item_id);
 
-        // Check if enough stock
-        if ($item->jumlah < $request->jumlah_keluar) {
+        if ($stockItem->stock < $request->jumlah_keluar) {
             return back()
                 ->withInput()
-                ->withErrors(['jumlah_keluar' => 'Stok tidak mencukupi. Stok tersedia: ' . $item->jumlah]);
+                ->withErrors(['jumlah_keluar' => 'Stok tidak mencukupi. Stok tersedia: ' . $stockItem->stock]);
         }
 
-        DB::transaction(function () use ($request, $item) {
-            // Create outgoing record with status pending
+        DB::transaction(function () use ($request, $stockItem) {
             ItemOutgoing::create([
-                'item_id' => $request->item_id,
+                'item_id' => $stockItem->idx,
                 'borrower_id' => $request->borrower_id,
                 'recorded_by' => auth()->id(),
                 'jumlah_keluar' => $request->jumlah_keluar,
@@ -102,8 +97,7 @@ class ItemOutgoingController extends Controller
                 'status' => 'pending',
             ]);
 
-            // Decrement stock immediately (reserved for this borrowing request)
-            $item->decrement('jumlah', $request->jumlah_keluar);
+            $stockItem->decrement('stock', $request->jumlah_keluar);
         });
 
         return redirect()->route('item-outgoing.index')
@@ -116,7 +110,7 @@ class ItemOutgoingController extends Controller
     public function update(Request $request, ItemOutgoing $itemOutgoing)
     {
         $request->validate([
-            'item_id' => 'required|exists:items,id',
+            'item_id' => 'required|exists:sstock_brg,idx',
             'borrower_id' => 'required|exists:borrowers,id',
             'jumlah_keluar' => 'required|integer|min:1',
             'tanggal_keluar' => 'required|date',
@@ -125,37 +119,37 @@ class ItemOutgoingController extends Controller
             'keterangan' => 'nullable|string',
         ]);
 
-        $oldItem = Item::findOrFail($itemOutgoing->item_id);
-        $newItem = Item::findOrFail($request->item_id);
+        $oldStockItem = SstockBrg::findOrFail($itemOutgoing->item_id);
+        $newStockItem = SstockBrg::findOrFail($request->item_id);
         $oldJumlah = $itemOutgoing->jumlah_keluar;
         $newJumlah = $request->jumlah_keluar;
 
-        DB::transaction(function () use ($request, $itemOutgoing, $oldItem, $newItem, $oldJumlah, $newJumlah) {
-            // Stock is already decremented (at borrow time), so adjust differences
-            if ($oldItem->id === $newItem->id) {
+        DB::transaction(function () use ($request, $itemOutgoing, $oldStockItem, $newStockItem, $oldJumlah, $newJumlah) {
+            if ($oldStockItem->idx === $newStockItem->idx) {
                 $diff = $newJumlah - $oldJumlah;
-                if ($diff > 0 && $newItem->jumlah < $diff) {
-                    throw new \Exception('Stok tidak mencukupi. Stok tersedia: ' . $newItem->jumlah);
+                if ($diff > 0 && $newStockItem->stock < $diff) {
+                    throw new \Exception('Stok tidak mencukupi. Stok tersedia: ' . $newStockItem->stock);
                 }
+
                 if ($diff !== 0) {
                     if ($diff > 0) {
-                        $newItem->decrement('jumlah', $diff);
+                        $newStockItem->decrement('stock', $diff);
                     } else {
-                        $newItem->increment('jumlah', abs($diff));
+                        $newStockItem->increment('stock', abs($diff));
                     }
                 }
             } else {
-                // Restore old item stock
-                $oldItem->increment('jumlah', $oldJumlah);
-                // Deduct from new item stock
-                if ($newItem->jumlah < $newJumlah) {
-                    throw new \Exception('Stok tidak mencukupi. Stok tersedia: ' . $newItem->jumlah);
+                $oldStockItem->increment('stock', $oldJumlah);
+
+                if ($newStockItem->stock < $newJumlah) {
+                    throw new \Exception('Stok tidak mencukupi. Stok tersedia: ' . $newStockItem->stock);
                 }
-                $newItem->decrement('jumlah', $newJumlah);
+
+                $newStockItem->decrement('stock', $newJumlah);
             }
 
             $itemOutgoing->update([
-                'item_id' => $request->item_id,
+                'item_id' => $newStockItem->idx,
                 'borrower_id' => $request->borrower_id,
                 'jumlah_keluar' => $newJumlah,
                 'tanggal_keluar' => $request->tanggal_keluar,
@@ -164,9 +158,8 @@ class ItemOutgoingController extends Controller
                 'keterangan' => $request->keterangan,
             ]);
 
-            // Log history
             ItemHistory::create([
-                'item_id' => $request->item_id,
+                'item_id' => $newStockItem->idx,
                 'user_id' => auth()->id(),
                 'action' => 'edit',
                 'jumlah_sebelum' => $oldJumlah,
@@ -189,17 +182,15 @@ class ItemOutgoingController extends Controller
             return back()->with('error', 'Hanya peminjaman yang sudah disetujui yang bisa diselesaikan.');
         }
 
-        $item = $itemOutgoing->item;
+        $stockItem = SstockBrg::findOrFail($itemOutgoing->item_id);
 
-        DB::transaction(function () use ($itemOutgoing, $item) {
-            $jumlahSebelum = $item->jumlah;
+        DB::transaction(function () use ($itemOutgoing, $stockItem) {
+            $jumlahSebelum = $stockItem->stock;
 
             $itemOutgoing->update(['status' => 'completed']);
 
-            // Restore stock back to daftar barang
-            $item->increment('jumlah', $itemOutgoing->jumlah_keluar);
+            $stockItem->increment('stock', $itemOutgoing->jumlah_keluar);
 
-            // Log history
             ItemHistory::create([
                 'item_id' => $itemOutgoing->item_id,
                 'user_id' => auth()->id(),
@@ -220,13 +211,11 @@ class ItemOutgoingController extends Controller
     public function destroy(ItemOutgoing $itemOutgoing)
     {
         DB::transaction(function () use ($itemOutgoing) {
-            // Restore stock if the item was still borrowing (pending or approved)
             if (in_array($itemOutgoing->status, ['pending', 'approved'])) {
-                $item = $itemOutgoing->item;
-                $jumlahSebelum = $item->jumlah;
-                $item->increment('jumlah', $itemOutgoing->jumlah_keluar);
+                $stockItem = SstockBrg::findOrFail($itemOutgoing->item_id);
+                $jumlahSebelum = $stockItem->stock;
+                $stockItem->increment('stock', $itemOutgoing->jumlah_keluar);
 
-                // Log history
                 ItemHistory::create([
                     'item_id' => $itemOutgoing->item_id,
                     'user_id' => auth()->id(),

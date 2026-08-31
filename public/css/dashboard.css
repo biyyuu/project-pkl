@@ -12,6 +12,65 @@
             color: #ffffff;
         }
 
+        /* ===== GLOBAL SCROLLBAR THEME ===== */
+        html,
+        body,
+        .main-content,
+        .sidebar,
+        .scroll-area,
+        .item-table-scroll {
+            scrollbar-width: thin;
+            scrollbar-color: #3a252549 #1a1210;
+        }
+
+        html::-webkit-scrollbar,
+        body::-webkit-scrollbar,
+        .main-content::-webkit-scrollbar,
+        .sidebar::-webkit-scrollbar,
+        .scroll-area::-webkit-scrollbar,
+        .item-table-scroll::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+
+        html::-webkit-scrollbar-track,
+        body::-webkit-scrollbar-track,
+        .main-content::-webkit-scrollbar-track,
+        .sidebar::-webkit-scrollbar-track,
+        .scroll-area::-webkit-scrollbar-track,
+        .item-table-scroll::-webkit-scrollbar-track {
+            background: #241816;
+        }
+
+        html::-webkit-scrollbar-thumb,
+        body::-webkit-scrollbar-thumb,
+        .main-content::-webkit-scrollbar-thumb,
+        .sidebar::-webkit-scrollbar-thumb,
+        .scroll-area::-webkit-scrollbar-thumb,
+        .item-table-scroll::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #7a2323 0%, #5c1a1a 100%);
+            border-radius: 999px;
+            border: 2px solid #241816;
+        }
+
+        html::-webkit-scrollbar-thumb:hover,
+        body::-webkit-scrollbar-thumb:hover,
+        .main-content::-webkit-scrollbar-thumb:hover,
+        .sidebar::-webkit-scrollbar-thumb:hover,
+        .scroll-area::-webkit-scrollbar-thumb:hover,
+        .item-table-scroll::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(180deg, #8d2a2a 0%, #6d1f1f 100%);
+        }
+
+        html::-webkit-scrollbar-corner,
+        body::-webkit-scrollbar-corner,
+        .main-content::-webkit-scrollbar-corner,
+        .sidebar::-webkit-scrollbar-corner,
+        .scroll-area::-webkit-scrollbar-corner,
+        .item-table-scroll::-webkit-scrollbar-corner {
+            background: #241816;
+        }
+
         /* ===== LAYOUT ===== */
         .app-layout {
             display: flex;

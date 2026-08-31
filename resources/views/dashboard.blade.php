@@ -220,14 +220,14 @@
                                 <tbody>
                                     @foreach($barangTersedia as $barang)
                                     <tr>
-                                        <td style="font-family: monospace; font-size: 12px;">{{ $barang->no_inventaris }}</td>
-                                        <td class="item-name">{{ $barang->nama_barang }}</td>
+                                        <td style="font-family: monospace; font-size: 12px;">{{ $barang->noinven }}</td>
+                                        <td class="item-name">{{ $barang->nama }}</td>
                                         <td>{{ $barang->merk ?? '-' }}</td>
                                         <td>
                                             <div style="display:flex; align-items:center; gap:8px;">
-                                                {{ $barang->jumlah }}
+                                                {{ $barang->stock }}
                                                 <div class="avail-bar-track">
-                                                    <div class="avail-bar-fill" style="width: {{ min(100, $barang->jumlah * 10) }}%"></div>
+                                                    <div class="avail-bar-fill" style="width: {{ min(100, $barang->stock * 10) }}%"></div>
                                                 </div>
                                             </div>
                                         </td>
