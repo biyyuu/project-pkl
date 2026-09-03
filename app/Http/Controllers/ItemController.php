@@ -13,11 +13,28 @@ class ItemController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $items = SstockBrg::orderBy('nama')->get();
+        $search = trim((string) $request->query('q', ''));
 
-        return view('item-list', compact('items'));
+        $items = SstockBrg::query()
+            ->when($search !== '', function ($query) use ($search) {
+                $query->where(function ($query) use ($search) {
+                    $query->where('noinven', 'like', "%{$search}%")
+                        ->orWhere('nama', 'like', "%{$search}%")
+                        ->orWhere('merk', 'like', "%{$search}%")
+                        ->orWhere('snumber', 'like', "%{$search}%")
+                        ->orWhere('pengadaan', 'like', "%{$search}%")
+                        ->orWhere('lokasi', 'like', "%{$search}%")
+                        ->orWhere('kondisi', 'like', "%{$search}%")
+                        ->orWhere('keterangan', 'like', "%{$search}%");
+                });
+            })
+            ->orderBy('nama')
+            ->paginate(25)
+            ->withQueryString();
+
+        return view('item-list', compact('items', 'search'));
     }
 
     /**

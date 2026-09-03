@@ -167,6 +167,123 @@
             width: 88px;
             white-space: nowrap;
         }
+
+        .item-search {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 18px;
+        }
+
+        .item-search input {
+            flex: 1;
+            min-width: 0;
+            background: rgba(0, 0, 0, 0.18);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 4px;
+            color: #fff;
+            padding: 11px 14px;
+            font: inherit;
+        }
+
+        .item-search input:focus {
+            outline: none;
+            border-color: #7a2323;
+            box-shadow: 0 0 0 3px rgba(122, 35, 35, 0.18);
+        }
+
+        .item-search input::placeholder {
+            color: rgba(255,255,255,0.42);
+        }
+
+        .item-search button,
+        .item-search a {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            padding: 0 16px;
+            font-size: 13px;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .item-search button {
+            border: 1px solid #5c1a1a;
+            background: #5c1a1a;
+            color: #fff;
+        }
+
+        .item-search a {
+            border: 1px solid rgba(255,255,255,0.1);
+            color: rgba(255,255,255,0.72);
+        }
+
+        .item-search button:hover { background: #7a2323; }
+        .item-search a:hover { background: rgba(255,255,255,0.05); color: #fff; }
+
+        .pagination-wrapper {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            padding-top: 16px;
+            margin-top: 8px;
+            border-top: 1px solid rgba(255,255,255,0.04);
+        }
+
+        .pagination-info {
+            color: rgba(255,255,255,0.55);
+            font-size: 12px;
+        }
+
+        .pagination-links {
+            display: flex;
+            gap: 4px;
+        }
+
+        .pagination-links a,
+        .pagination-links span {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            text-decoration: none;
+        }
+
+        .pagination-links a {
+            color: rgba(255,255,255,0.65);
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.06);
+        }
+
+        .pagination-links a:hover {
+            color: #fff;
+            background: rgba(255,255,255,0.08);
+        }
+
+        .pagination-links .active-page {
+            color: #fff;
+            background: #5c1a1a;
+            border: 1px solid #5c1a1a;
+        }
+
+        .pagination-links .disabled-page {
+            color: rgba(255,255,255,0.15);
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.04);
+        }
+
+        @media (max-width: 640px) {
+            .item-search { flex-wrap: wrap; }
+            .item-search input { flex-basis: 100%; }
+            .item-search button, .item-search a { min-height: 38px; flex: 1; }
+            .pagination-wrapper { align-items: flex-start; flex-direction: column; }
+        }
     </style>
 </head>
 <body>
@@ -261,15 +378,28 @@
             <div class="card">
                 <div class="card-header">
                     <span class="card-title">Semua Barang</span>
-                    <span class="card-badge">Total: {{ $items->count() }} barang</span>
+                    <span class="card-badge">Total: {{ $items->total() }} barang</span>
                 </div>
+
+                <form method="GET" action="{{ route('item') }}" class="item-search">
+                    <input
+                        type="search"
+                        name="q"
+                        value="{{ $search }}"
+                        placeholder="Cari nama, no. inventaris, merk, no. seri, kondisi..."
+                        aria-label="Cari barang">
+                    <button type="submit">Cari</button>
+                    @if($search !== '')
+                        <a href="{{ route('item') }}">Reset</a>
+                    @endif
+                </form>
                 
                 @if($items->isEmpty())
                     <div class="empty-state" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; color: rgba(255,255,255,0.3);">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width: 48px; height: 48px; margin-bottom: 12px; opacity: 0.3;">
                             <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
                         </svg>
-                        <p>Belum ada data barang</p>
+                        <p>{{ $search !== '' ? 'Barang yang dicari tidak ditemukan' : 'Belum ada data barang' }}</p>
                     </div>
                 @else
                     <div class="item-table-shell">
@@ -355,6 +485,34 @@
                         </table>
                         </div>
                     </div>
+                    @if($items->hasPages())
+                        <div class="pagination-wrapper">
+                            <span class="pagination-info">
+                                Menampilkan {{ $items->firstItem() }}-{{ $items->lastItem() }} dari {{ $items->total() }} barang
+                            </span>
+                            <div class="pagination-links">
+                                @if($items->onFirstPage())
+                                    <span class="disabled-page">&lsaquo;</span>
+                                @else
+                                    <a href="{{ $items->previousPageUrl() }}">&lsaquo;</a>
+                                @endif
+
+                                @foreach($items->getUrlRange(1, $items->lastPage()) as $page => $url)
+                                    @if($page == $items->currentPage())
+                                        <span class="active-page">{{ $page }}</span>
+                                    @else
+                                        <a href="{{ $url }}">{{ $page }}</a>
+                                    @endif
+                                @endforeach
+
+                                @if($items->hasMorePages())
+                                    <a href="{{ $items->nextPageUrl() }}">&rsaquo;</a>
+                                @else
+                                    <span class="disabled-page">&rsaquo;</span>
+                                @endif
+                            </div>
+                        </div>
+                    @endif
                 @endif
             </div>
         </main>
